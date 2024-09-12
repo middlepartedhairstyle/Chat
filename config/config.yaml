@@ -1,0 +1,29 @@
+app:
+  appName: "HiWe"
+  appMode: "debug"
+  appHost: "127.0.0.1"
+  appPort: "8080"
+email:
+  from: "2731337079@qq.com"
+  to: "2731337079@qq.com"
+  port: 465
+  host: "smtp.qq.com"
+  password: "kewjudnxqmakdgig"
+mysql 1:
+  driver: "mysql"
+  user: "user1"
+  password: "123456789Lyg"
+  host: "23.95.15.178"
+  port: "3306"
+  db_name: "chatAI"
+mysql:
+  driver: "mysql"
+  user: "root"
+  password: "123456"
+  host: "127.0.0.1"
+  port: "3306"
+  db_name: "chatai"
+redis:
+  addr: "23.95.15.178:6379"
+  password: "luogan"
+  db: 0
