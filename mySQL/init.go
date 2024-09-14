@@ -24,7 +24,12 @@ func Init() {
 	}
 
 	//数据库表创建
-	CreateTable(&(models.UserBaseInfo{})) //用户基础信息
+	CreateTable(&(models.UserBaseInfoTable{})) //用户基础信息
+	CreateTable(&(models.CaptchaTable{}))      //用户验证码
+	CreateTable(&(models.GroupNumTable{}))     //用户群
+	CreateTable(&(models.GroupUserTable{}))    //用户群用户
+	CreateTable(&(models.GroupMessageTable{})) //群消息
+	CreateTable(&(models.UserMessageTable{}))  //用户消息
 }
 
 func CreateTable(table interface{}) {
