@@ -3,7 +3,6 @@ package mySQL
 import (
 	"errors"
 	"fmt"
-	"github.com/middlepartedhairstyle/HiWe/models"
 	"github.com/middlepartedhairstyle/HiWe/utils"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -24,12 +23,12 @@ func Init() {
 	}
 
 	//数据库表创建
-	CreateTable(&(models.UserBaseInfoTable{})) //用户基础信息
-	CreateTable(&(models.CaptchaTable{}))      //用户验证码
-	CreateTable(&(models.GroupNumTable{}))     //用户群
-	CreateTable(&(models.GroupUserTable{}))    //用户群用户
-	CreateTable(&(models.GroupMessageTable{})) //群消息
-	CreateTable(&(models.UserMessageTable{}))  //用户消息
+	CreateTable(&(UserBaseInfoTable{})) //用户基础信息
+	CreateTable(&(CaptchaTable{}))      //用户验证码
+	CreateTable(&(GroupNumTable{}))     //用户群
+	CreateTable(&(GroupUserTable{}))    //用户群用户
+	CreateTable(&(GroupMessageTable{})) //群消息
+	CreateTable(&(UserMessageTable{}))  //用户消息
 }
 
 func CreateTable(table interface{}) {

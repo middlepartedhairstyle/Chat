@@ -25,3 +25,9 @@ func MakePassword(password string, salt string) string {
 func CheckPassword(password string, salt string, encryptionPassword string) bool {
 	return Md5(password+salt) == encryptionPassword
 }
+
+// MakeToken 产生token,利用username和password产生token1，再利用token1和sale产生token2
+func MakeToken(username string, password string, salt string) string {
+	var token = MD5(username + password)
+	return Md5(token + salt)
+}

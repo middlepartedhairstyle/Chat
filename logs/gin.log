@@ -4,7 +4,10 @@
  - using env:	export GIN_MODE=release
  - using code:	gin.SetMode(gin.ReleaseMode)
 
-[GIN-debug] GET    /                         --> github.com/middlepartedhairstyle/HiWe/routers.Routers.func1 (3 handlers)
+[GIN-debug] POST   /register                 --> github.com/middlepartedhairstyle/HiWe/controllers.RegisterController (3 handlers)
 [GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
 Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
 [GIN-debug] Listening and serving HTTP on 127.0.0.1:8080
+[GIN] 2024/09/14 - 22:09:11 | 200 |     13.6816ms |       127.0.0.1 | POST     "/register"
+[GIN] 2024/09/14 - 22:09:42 | 200 |      8.2678ms |       127.0.0.1 | POST     "/register"
+[GIN] 2024/09/14 - 22:09:54 | 200 |      8.2162ms |       127.0.0.1 | POST     "/register"
