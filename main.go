@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/middlepartedhairstyle/HiWe/mySQL"
-	"github.com/middlepartedhairstyle/HiWe/redis"
 	"github.com/middlepartedhairstyle/HiWe/routers"
 	"github.com/middlepartedhairstyle/HiWe/utils"
 	"io"
@@ -14,7 +13,7 @@ import (
 func init() {
 	utils.ReadConfig("config/config.yaml")
 	mySQL.Init()
-	redis.Init()
+	//redis.Init()//redis初始化
 }
 
 func main() {

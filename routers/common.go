@@ -7,4 +7,5 @@ import (
 
 func Routers(router *gin.Engine) {
 	router.POST("/register", controllers.RegisterController)
+	router.POST("/login", controllers.LoginController)
 }

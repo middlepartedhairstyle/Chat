@@ -14,7 +14,7 @@ const (
 // UserBaseInfoTable 用户基础信息(数据库)
 type UserBaseInfoTable struct {
 	gorm.Model
-	Email    string `gorm:"type:varchar(127);unique_index"`
+	Email    string `gorm:"type:varchar(127);not null;unique:email"`
 	Username string `gorm:"type:varchar(20)"`
 	Password string `gorm:"type:varchar(32)"`
 	Md5Num   string `gorm:"type:varchar(6)"`
