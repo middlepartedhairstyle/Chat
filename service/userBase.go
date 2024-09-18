@@ -47,9 +47,9 @@ func Login(user *models.UserBaseInfo) (string, bool) {
 }
 
 // SendCode 发送验证码
-func SendCode(user *models.UserBaseInfo) bool {
+func SendCode(user *models.UserCaptcha) bool {
 	if user.Email != "" {
-		err, _ := utils.EmailSendCode(user.Email, utils.RandString())
+		err, _ := utils.EmailSendCode(user.Email, user.Code)
 		if !err {
 			return true
 		} else {
@@ -57,5 +57,15 @@ func SendCode(user *models.UserBaseInfo) bool {
 		}
 	} else {
 		return false
+	}
+}
+
+// VerifyCode 校验验证码
+func VerifyCode(user *models.UserCaptcha) (string, bool) {
+	str, err := user.VerifyCode()
+	if err {
+		return str, true
+	} else {
+		return str, false
 	}
 }

@@ -24,9 +24,10 @@ type UserBaseInfoTable struct {
 // CaptchaTable 用户验证码(数据库)
 type CaptchaTable struct {
 	gorm.Model
-	Code         uint32 `gorm:"type:int(11)"`
-	Email        string
-	UserBaseInfo UserBaseInfoTable `gorm:"type:varchar(127);foreignKey:Email;references:Email"`
+	Code  uint32 `gorm:"type:int(11)"`
+	Email string `gorm:"type:varchar(127);unique:email;not null"`
+	Pass  bool   `gorm:"type:boolean"`
+	//UserBaseInfo UserBaseInfoTable `gorm:"type:varchar(127);foreignKey:Email;references:Email"`
 }
 
 // UserMessageTable 用户消息(数据库)

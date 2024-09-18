@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:mysql://localhost:3306/chatai</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="0@23.95.15.178" uuid="fceaf418-81d6-43ba-add7-f66779fa8bc6">
+      <driver-ref>redis</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>jdbc.RedisDriver</jdbc-driver>
+      <jdbc-url>jdbc:redis://23.95.15.178:6379/0</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

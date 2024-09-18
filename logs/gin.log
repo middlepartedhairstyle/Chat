@@ -6,7 +6,10 @@
 
 [GIN-debug] POST   /register                 --> github.com/middlepartedhairstyle/HiWe/controllers.RegisterController (3 handlers)
 [GIN-debug] POST   /login                    --> github.com/middlepartedhairstyle/HiWe/controllers.LoginController (3 handlers)
+[GIN-debug] POST   /sendCode                 --> github.com/middlepartedhairstyle/HiWe/controllers.SendCodeController (3 handlers)
+[GIN-debug] POST   /verifyCode               --> github.com/middlepartedhairstyle/HiWe/controllers.VerifyCodeController (3 handlers)
+[GIN-debug] GET    /SendMsg                  --> github.com/middlepartedhairstyle/HiWe/controllers.SendMsgController (3 handlers)
+[GIN-debug] GET    /GetMsg                   --> github.com/middlepartedhairstyle/HiWe/controllers.GetMsgController (3 handlers)
 [GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
 Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
 [GIN-debug] Listening and serving HTTP on 127.0.0.1:8080
-[GIN] 2024/09/17 - 22:38:29 | 200 |      1.2247ms |       127.0.0.1 | POST     "/login"

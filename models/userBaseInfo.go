@@ -1,11 +1,14 @@
 package models
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"github.com/middlepartedhairstyle/HiWe/mySQL"
+	"github.com/middlepartedhairstyle/HiWe/redis"
 	"github.com/middlepartedhairstyle/HiWe/utils"
 	"gorm.io/gorm"
+	"time"
 )
 
 // UserBaseInfo 用户基础信息
@@ -19,10 +22,18 @@ type UserBaseInfo struct {
 }
 
 // Captcha 用户验证码
+// 后期增加将通过了邮箱验证的邮箱存入其中，用户注册时从里面寻找，确定邮箱已近验证
 type Captcha struct {
 	gorm.Model
 	Code  uint32 `json:"code"`
 	Email string `json:"email"`
+	Pass  bool   `json:"pass"`
+}
+
+// UserCaptcha 用户验证码
+type UserCaptcha struct {
+	Email string `json:"email"`
+	Code  string `json:"code"`
 }
 
 // CreatUser 创建用户，将用户信息储存在数据库中
@@ -82,5 +93,33 @@ func (user *UserBaseInfo) CheckPassword() bool {
 		return true
 	} else {
 		return false
+	}
+}
+
+// MakeVerifyCode 产生验证码
+func (captcha *UserCaptcha) MakeVerifyCode() bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute) // 创建带有超时的上下文
+	defer cancel()                                                          // 确保在函数结束时取消上下文
+	captcha.Code = utils.RandString()
+	err := redis.Rdb.Set(ctx, captcha.Email, captcha.Code, time.Minute).Err()
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+// VerifyCode 校验验证码
+func (captcha *UserCaptcha) VerifyCode() (string, bool) {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute) // 创建带有超时的上下文
+	defer cancel()                                                          // 确保在函数结束时取消上下文
+	code, err := redis.Rdb.Get(ctx, captcha.Email).Result()
+	if err != nil {
+		return "验证码过期", false
+	} else {
+		if captcha.Code == code {
+			return "验证成功", true
+		} else {
+			return "验证码错误", false
+		}
 	}
 }

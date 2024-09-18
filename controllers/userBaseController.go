@@ -61,10 +61,31 @@ func LoginController(c *gin.Context) {
 
 // SendCodeController 验证码发送控制器
 func SendCodeController(c *gin.Context) {
-	var user models.UserBaseInfo
+	var user models.UserCaptcha
 	if err := c.ShouldBindJSON(&user); err != nil {
-		utils.Fail(c, "fail", user)
+		utils.Fail(c, "fail", user.Email)
 	} else {
-		utils.Success(c, "success", user)
+		b := (&user).MakeVerifyCode()
+		if b {
+			//service.SendCode(&user) //发送验证码
+			utils.Success(c, "success", user.Email)
+		} else {
+			utils.Fail(c, "fail", user.Email)
+		}
+	}
+}
+
+// VerifyCodeController 验证码校验控制器
+func VerifyCodeController(c *gin.Context) {
+	var user models.UserCaptcha
+	if err := c.ShouldBindJSON(&user); err != nil {
+		utils.Fail(c, FAIL, err.Error())
+	} else {
+		str, b := service.VerifyCode(&user)
+		if b {
+			utils.Success(c, "success", str)
+		} else {
+			utils.Fail(c, "fail", str)
+		}
 	}
 }

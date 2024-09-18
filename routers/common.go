@@ -8,4 +8,10 @@ import (
 func Routers(router *gin.Engine) {
 	router.POST("/register", controllers.RegisterController)
 	router.POST("/login", controllers.LoginController)
+	router.POST("/sendCode", controllers.SendCodeController)
+	router.POST("/verifyCode", controllers.VerifyCodeController)
+
+	//msg
+	router.GET("/SendMsg", controllers.SendMsgController)
+	router.GET("/GetMsg", controllers.GetMsgController)
 }
