@@ -60,7 +60,7 @@ func (user *UserBaseInfo) CreatUser() bool {
 func (user *UserBaseInfo) PasswordMD5() bool {
 	if user.Password != "" {
 		(*user).Md5Num = utils.RandString()
-		(*user).Password = utils.MakePassword((*user).Password, (*user).Md5Num)
+		(*user).Password = utils.MakePasswordMd5((*user).Password, (*user).Md5Num)
 		return true
 	} else {
 		return false
@@ -70,7 +70,7 @@ func (user *UserBaseInfo) PasswordMD5() bool {
 // UpdateToken 更新token
 func (user *UserBaseInfo) UpdateToken() bool {
 	if !utils.IsEmptyStruct(*user) {
-		user.Token = utils.MakeToken(user.Email, user.Password, utils.RandString())
+		user.Token = utils.MakeTokenMd5(user.Email, user.Password, utils.RandString())
 		return true
 	} else {
 		return false
@@ -89,7 +89,7 @@ func (user *UserBaseInfo) CheckPassword() bool {
 		return false
 	}
 
-	if utils.CheckPassword(user.Password, result.Md5Num, result.Password) {
+	if utils.CheckPasswordMd5(user.Password, result.Md5Num, result.Password) {
 		return true
 	} else {
 		return false

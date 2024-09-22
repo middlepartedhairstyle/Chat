@@ -29,6 +29,7 @@ func Init() {
 	CreateTable(&(GroupUserTable{}))    //用户群用户
 	CreateTable(&(GroupMessageTable{})) //群消息
 	CreateTable(&(UserMessageTable{}))  //用户消息
+	CreateTable(&(UserFriendsTable{}))  //用户好友列表
 }
 
 func CreateTable(table interface{}) {

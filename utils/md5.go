@@ -3,7 +3,6 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"strings"
 )
 
@@ -19,17 +18,16 @@ func MD5(srt string) string {
 	return strings.ToUpper(Md5(srt))
 }
 
-func MakePassword(password string, salt string) string {
+func MakePasswordMd5(password string, salt string) string {
 	return Md5(password + salt)
 }
 
-func CheckPassword(password string, salt string, encryptionPassword string) bool {
-	fmt.Println(Md5(password + salt))
+func CheckPasswordMd5(password string, salt string, encryptionPassword string) bool {
 	return Md5(password+salt) == encryptionPassword
 }
 
-// MakeToken 产生token,利用username和password产生token1，再利用token1和sale产生token2
-func MakeToken(username string, password string, salt string) string {
-	var token = MD5(username + password)
+// MakeTokenMd5 产生token,利用username和password产生token1，再利用token1和sale产生token2
+func MakeTokenMd5(email string, password string, salt string) string {
+	var token = MD5(email + password)
 	return Md5(token + salt)
 }

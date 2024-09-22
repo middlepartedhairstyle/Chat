@@ -17,6 +17,7 @@ func Publish(ctx context.Context, channel string, message string) error {
 	}
 }
 
+// Subscribe 订阅消息的redis
 func Subscribe(ctx context.Context, channel string) (string, error) {
 	sub := Rdb.Subscribe(ctx, channel)
 	msg, err := sub.ReceiveMessage(ctx)

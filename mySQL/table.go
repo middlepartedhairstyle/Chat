@@ -9,6 +9,7 @@ const (
 	GROUPUSERTABLE    string = "group_user_tables"
 	USERBASETABLE     string = "user_base_info_tables"
 	USERMESSAGETABLE  string = "user_messages_tables"
+	USERFRIENDSTABLE  string = "user_friends_tables"
 )
 
 // UserBaseInfoTable 用户基础信息(数据库)
@@ -28,6 +29,15 @@ type CaptchaTable struct {
 	Email string `gorm:"type:varchar(127);unique:email;not null"`
 	Pass  bool   `gorm:"type:boolean"`
 	//UserBaseInfo UserBaseInfoTable `gorm:"type:varchar(127);foreignKey:Email;references:Email"`
+}
+
+// UserFriendsTable 用户好友表(数据库)
+type UserFriendsTable struct {
+	gorm.Model
+	UserBaseInfoOne UserBaseInfoTable `gorm:"foreignKey:User;references:ID"`
+	UserBaseInfo    UserBaseInfoTable `gorm:"foreignKey:Friend;references:ID"`
+	User            uint              `gorm:"type:int(11);not null;uniqueIndex:idx_user_friend"`
+	Friend          uint              `gorm:"type:int(11);not null;uniqueIndex:idx_user_friend"`
 }
 
 // UserMessageTable 用户消息(数据库)

@@ -12,6 +12,6 @@ func Routers(router *gin.Engine) {
 	router.POST("/verifyCode", controllers.VerifyCodeController)
 
 	//msg
-	router.GET("/SendMsg", controllers.SendMsgController)
-	router.GET("/GetMsg", controllers.GetMsgController)
+	router.GET("/ChatWithFriend", controllers.ChatWithFriendController)
+
 }
