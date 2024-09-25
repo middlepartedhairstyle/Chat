@@ -8,13 +8,10 @@
 [GIN-debug] POST   /login                    --> github.com/middlepartedhairstyle/HiWe/controllers.LoginController (3 handlers)
 [GIN-debug] POST   /sendCode                 --> github.com/middlepartedhairstyle/HiWe/controllers.SendCodeController (3 handlers)
 [GIN-debug] POST   /verifyCode               --> github.com/middlepartedhairstyle/HiWe/controllers.VerifyCodeController (3 handlers)
+[GIN-debug] GET    /addFriend                --> github.com/middlepartedhairstyle/HiWe/controllers.FriendController (3 handlers)
 [GIN-debug] GET    /ChatWithFriend           --> github.com/middlepartedhairstyle/HiWe/controllers.ChatWithFriendController (3 handlers)
 [GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
 Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
 [GIN-debug] Listening and serving HTTP on 127.0.0.1:8080
-[GIN] 2024/09/22 - 21:25:25 | 200 |      1.3837ms |       127.0.0.1 | GET      "/ChatWithFriend?id=1&user_id=1&friend_id=2"
-[GIN] 2024/09/22 - 21:25:28 | 200 |       507.5µs |       127.0.0.1 | GET      "/ChatWithFriend?id=4&user_id=2&friend_id=1"
-[GIN] 2024/09/22 - 21:25:32 | 200 |            0s |       127.0.0.1 | GET      "/ChatWithFriend?id=4&user_id=2&friend_id=1"
-[GIN] 2024/09/22 - 21:25:50 | 200 |       564.9µs |       127.0.0.1 | GET      "/ChatWithFriend?id=2&user_id=2&friend_id=1"
-[GIN] 2024/09/22 - 21:27:25 | 200 |         809µs |       127.0.0.1 | GET      "/ChatWithFriend?id=3&user_id=2&friend_id=3"
-[GIN] 2024/09/22 - 21:27:29 | 200 |       1.167ms |       127.0.0.1 | GET      "/ChatWithFriend?id=2&user_id=2&friend_id=1"
+[GIN] 2024/09/25 - 20:51:28 | 200 |      9.4207ms |       127.0.0.1 | GET      "/addFriend?user_id=3&friend_id=55"
+[GIN] 2024/09/25 - 20:52:26 | 200 |      8.6655ms |       127.0.0.1 | GET      "/addFriend?user_id=3&friend_id=55"

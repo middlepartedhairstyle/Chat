@@ -25,6 +25,7 @@ func Subscribe(ctx context.Context, channel string) (string, error) {
 		fmt.Println("redis subscribe err:", err)
 		return "", err
 	} else {
+		fmt.Println("redis subscribe success")
 		return msg.Payload, nil
 	}
 }

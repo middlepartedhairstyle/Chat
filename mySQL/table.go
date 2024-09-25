@@ -34,10 +34,10 @@ type CaptchaTable struct {
 // UserFriendsTable 用户好友表(数据库)
 type UserFriendsTable struct {
 	gorm.Model
-	UserBaseInfoOne UserBaseInfoTable `gorm:"foreignKey:User;references:ID"`
-	UserBaseInfo    UserBaseInfoTable `gorm:"foreignKey:Friend;references:ID"`
-	User            uint              `gorm:"type:int(11);not null;uniqueIndex:idx_user_friend"`
-	Friend          uint              `gorm:"type:int(11);not null;uniqueIndex:idx_user_friend"`
+	UserBaseInfoOne UserBaseInfoTable `gorm:"foreignKey:UserID;references:ID"`
+	UserBaseInfo    UserBaseInfoTable `gorm:"foreignKey:FriendID;references:ID"`
+	UserID          uint              `gorm:"type:int(11);not null;uniqueIndex:idx_user_friend"`
+	FriendID        uint              `gorm:"type:int(11);not null;uniqueIndex:idx_user_friend"`
 }
 
 // UserMessageTable 用户消息(数据库)

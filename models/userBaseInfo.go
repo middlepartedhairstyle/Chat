@@ -123,3 +123,16 @@ func (captcha *UserCaptcha) VerifyCode() (string, bool) {
 		}
 	}
 }
+
+// CheckToken 检查token
+func CheckToken(userId uint64, checkToken string) bool {
+	var token string
+	err := mySQL.DB.Table(mySQL.USERBASETABLE).Where("id=?", userId).Select("token").Scan(&token)
+	if err.Error != nil {
+		return false
+	}
+	if token == checkToken {
+		return true
+	}
+	return false
+}

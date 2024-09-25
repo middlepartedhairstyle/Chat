@@ -34,7 +34,6 @@ func SendMsg(ws *websocket.Conn, c *gin.Context, channel string) {
 			}
 
 		}
-
 	}
 
 	defer func(ws *websocket.Conn) {

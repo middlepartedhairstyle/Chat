@@ -6,6 +6,7 @@ import (
 	"github.com/middlepartedhairstyle/HiWe/models"
 	"github.com/middlepartedhairstyle/HiWe/service"
 	"github.com/middlepartedhairstyle/HiWe/utils"
+	"strconv"
 )
 
 func ChatWithFriendController(c *gin.Context) {
@@ -26,7 +27,10 @@ func ChatWithFriendController(c *gin.Context) {
 			return
 		}
 
-		channel := friend.Contrast()
+		//好友消息通道
+		channel := strconv.FormatUint(friend.Id, 10)
+
+		//开启聊天协程
 		go service.SendMsg(ws, c, channel)
 		go service.GetMsg(ws, c, channel)
 
