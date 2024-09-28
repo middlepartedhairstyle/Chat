@@ -23,13 +23,13 @@ func Init() {
 	}
 
 	//数据库表创建
-	CreateTable(&(UserBaseInfoTable{})) //用户基础信息
-	CreateTable(&(CaptchaTable{}))      //用户验证码
+	CreateTable(&(UserBaseInfoTable{})) //用户基础信息 //用户验证码
 	CreateTable(&(GroupNumTable{}))     //用户群
 	CreateTable(&(GroupUserTable{}))    //用户群用户
 	CreateTable(&(GroupMessageTable{})) //群消息
 	CreateTable(&(UserMessageTable{}))  //用户消息
 	CreateTable(&(UserFriendsTable{}))  //用户好友列表
+	CreateTable(&(RequestAddFriend{}))
 }
 
 func CreateTable(table interface{}) {

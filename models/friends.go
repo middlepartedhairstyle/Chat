@@ -1,80 +1,63 @@
 package models
 
 import (
-	"database/sql"
-	"errors"
-	"fmt"
 	"github.com/middlepartedhairstyle/HiWe/mySQL"
-	"gorm.io/gorm"
-	"strconv"
+)
+
+const (
+	Success string = "好友添加成功"
+	Failed1 string = "添加失败"
 )
 
 // Friend 好友
 type Friend struct {
-	Id        uint64 `json:"id"`
-	UserID    uint64 `json:"user_id"`
-	FriendID  uint64 `json:"friend_id"`
-	UserToken string `json:"user_token"`
-}
-
-// FriendInfo 好友具体信息
-type FriendInfo struct {
-	gorm.Model
-	UserId   uint64 `json:"user_id"`
-	FriendId uint64 `json:"friend_id"`
+	Id        uint64 `json:"id"`         //用户与好友的组队id
+	UserID    uint64 `json:"user_id"`    //用户自己的di
+	FriendID  uint64 `json:"friend_id"`  //好友的id
+	UserToken string `json:"user_token"` //用户的id
 }
 
 // IsFriend 判断是否为好友
 func (friend *Friend) IsFriend() bool {
-	var info struct {
-		User   uint64
-		Friend uint64
-	}
-	err := mySQL.DB.Table(mySQL.USERFRIENDSTABLE).Where("id=?", friend.Id).Select("user_id,friend_id").Scan(&info)
-	if err.Error != nil {
-		fmt.Println(err.Error)
-		return false
-	}
-
-	//确认是否为好友
-	if friend.UserID == info.User && friend.FriendID == info.Friend {
-		return true
-	}
-	return false
-}
-
-// Contrast 通道
-func (friend *Friend) Contrast() string {
-	if friend.UserID > friend.FriendID {
-		return strconv.FormatUint(friend.UserID, 10) + strconv.FormatUint(friend.FriendID, 10)
-	} else {
-		return strconv.FormatUint(friend.FriendID, 10) + strconv.FormatUint(friend.UserID, 10)
-	}
+	var f mySQL.UserFriendsTable
+	f.FriendID = friend.FriendID
+	f.UserID = friend.UserID
+	return f.IsFriend()
 }
 
 // AddFriend 使用用户id添加好友
-func (friendInfo *FriendInfo) AddFriend() (bool, string) {
-
-	//查看是否为好友
-	var exists int
-	//交换好友id顺序，以较大的id为第一个id放入数据库中
-	if friendInfo.FriendId < friendInfo.UserId {
-		friendInfo.FriendId, friendInfo.UserId = friendInfo.UserId, friendInfo.FriendId
+func (friend *Friend) AddFriend() (bool, string) {
+	var f mySQL.UserFriendsTable
+	f.FriendID = friend.FriendID
+	f.UserID = friend.UserID
+	err := f.AddFriend()
+	if err {
+		return true, Success
+	} else {
+		return false, Failed1
 	}
+}
 
-	row := mySQL.DB.Table(mySQL.USERFRIENDSTABLE).Where("user_id=? AND friend_id=?", friendInfo.UserId, friendInfo.FriendId).Select("1").Row()
-	err := row.Scan(&exists)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return false, "服务器错误"
-	}
+// ConfirmAddFriend 用于请求好友添加，后另一方确认是否成为好友
+func (friend *Friend) ConfirmAddFriend() (bool, string) {
+	return false, Failed1
+}
 
-	//不为好友，创建好友
-	if exists == 0 {
-		err = mySQL.DB.Table(mySQL.USERFRIENDSTABLE).Create(friendInfo).Error
-		if err != nil {
-			return false, "服务器错误"
-		}
-		return true, "好友添加成功"
+// RequestAddFriend 用于请求成为好友,将请求存入数据库和redis
+func (friend *Friend) RequestAddFriend() bool {
+	var f mySQL.RequestAddFriend
+	f.FromRequestID=friend.UserID
+	f.ToRequestID=friend.FriendID
+	//存入数据库
+	err:=f.RequestAddFriend()
+	if !err {
+		return false
 	}
-	return false, "已为好友"
+	//存入redis
+	return false
+}
+
+// DeleteFriend 用于删除好友，不需要好友确认
+func (friend *Friend) DeleteFriend() (bool, string) {
+	return false, Failed1
 }
