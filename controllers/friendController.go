@@ -6,6 +6,12 @@ import (
 	"github.com/middlepartedhairstyle/HiWe/utils"
 )
 
+// RequestAddFriendController 添加好友请求的控制器
+func RequestAddFriendController(c *gin.Context) {
+
+}
+
+// AddFriendController 添加好友的控制器
 func AddFriendController(c *gin.Context) {
 	var friend models.Friend
 	friend.UserID = utils.ToUint64(c.Query("user_id"))

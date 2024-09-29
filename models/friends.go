@@ -46,15 +46,16 @@ func (friend *Friend) ConfirmAddFriend() (bool, string) {
 // RequestAddFriend 用于请求成为好友,将请求存入数据库和redis
 func (friend *Friend) RequestAddFriend() bool {
 	var f mySQL.RequestAddFriend
-	f.FromRequestID=friend.UserID
-	f.ToRequestID=friend.FriendID
+	f.FromRequestID = friend.UserID
+	f.ToRequestID = friend.FriendID
 	//存入数据库
-	err:=f.RequestAddFriend()
+	err := f.RequestAddFriend()
 	if !err {
 		return false
 	}
+
 	//存入redis
-	return false
+	return true
 }
 
 // DeleteFriend 用于删除好友，不需要好友确认
