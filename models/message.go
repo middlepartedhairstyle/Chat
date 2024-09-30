@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"github.com/gorilla/websocket"
 	"gopkg.in/fatih/set.v0"
 	"sync"
@@ -15,20 +16,18 @@ const (
 
 // UserMessage 用户消息
 type UserMessage struct {
-	FromID      uint   `json:"from_id"`
-	ToID        uint   `json:"to_id"`
+	FriendID    uint64 `json:"friend_id"`
+	FromID      uint64 `json:"from_id"`
+	ToID        uint64 `json:"to_id"`
 	MessageType uint8  `json:"message_type"` //消息类型，如图片，文字等
-	Media       uint8  `json:"media"`        //发送消息类型，例如私聊，群聊等
-	Content     string `json:"content"`
+	Message     string `json:"message"`
 }
 
 // GroupMessage 群消息
 type GroupMessage struct {
-	FromID      uint   `json:"from_id"`
-	ToGroupID   uint   `json:"to_group_id"`
-	MessageType uint8  `json:"message_type"` //消息类型，如图片，文字等
-	Media       uint8  `json:"media"`        //发送消息类型，例如私聊，群聊等
-	Content     string `json:"content"`
+	FromID      uint  `json:"from_id"`
+	ToGroupID   uint  `json:"to_group_id"`
+	MessageType uint8 `json:"message_type"` //消息类型，如图片，文字等
 }
 
 type Note struct {
@@ -40,3 +39,15 @@ type Note struct {
 var ClientMap map[int]*Note = make(map[int]*Note)
 
 var RwLocker sync.RWMutex
+
+func (userMessage *UserMessage) ToJson(data []byte) {
+	err := json.Unmarshal(data, userMessage)
+	if err != nil {
+		return
+	}
+}
+
+func (userMessage *UserMessage) FromJson() []byte {
+	data, _ := json.Marshal(*userMessage)
+	return data
+}

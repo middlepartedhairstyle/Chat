@@ -11,7 +11,7 @@ const (
 
 // Friend 好友
 type Friend struct {
-	Id        uint64 `json:"id"`         //用户与好友的组队id
+	Id        uint   `json:"id"`         //用户与好友的组队id
 	UserID    uint64 `json:"user_id"`    //用户自己的di
 	FriendID  uint64 `json:"friend_id"`  //好友的id
 	UserToken string `json:"user_token"` //用户的id
@@ -22,6 +22,7 @@ func (friend *Friend) IsFriend() bool {
 	var f mySQL.UserFriendsTable
 	f.FriendID = friend.FriendID
 	f.UserID = friend.UserID
+	f.ID = friend.Id
 	return f.IsFriend()
 }
 

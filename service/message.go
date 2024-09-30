@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/middlepartedhairstyle/HiWe/models"
+	"github.com/middlepartedhairstyle/HiWe/mySQL"
 	"github.com/middlepartedhairstyle/HiWe/redis"
 	"gopkg.in/fatih/set.v0"
 	"net/http"
@@ -17,17 +18,18 @@ const (
 )
 
 // SendMsg 发送消息
-func SendMsg(ws *websocket.Conn, c *gin.Context, channel string) {
+func SendMsg(ws *websocket.Conn, c *gin.Context) {
+	var data models.UserMessage
 	for {
-		messageType, data, err := ws.ReadMessage()
+		messageType, d, err := ws.ReadMessage()
 		if err != nil {
 			fmt.Println(err)
 			break
 		}
 		if messageType == websocket.TextMessage {
-			message := string(data)
-			err = redis.Publish(c, ChatWithFriend+channel, message)
-			fmt.Println("发送消息:", message)
+			data.ToJson(d)
+			err = redis.Publish(c, ChatWithFriend+strconv.FormatUint(data.FriendID, 10), string(d))
+			fmt.Println("发送消息:", string(d))
 			if err != nil {
 				fmt.Println(err)
 				break
@@ -46,17 +48,39 @@ func SendMsg(ws *websocket.Conn, c *gin.Context, channel string) {
 }
 
 // GetMsg 获取消息
-func GetMsg(ws *websocket.Conn, c *gin.Context, channel string) {
+func GetMsg(ws *websocket.Conn, c *gin.Context, id uint64) {
+	var message chan models.UserMessage
+	message = make(chan models.UserMessage, 50)
+
+	//查找好友
+	for _, item := range mySQL.SelectAllFriend(uint(id)) {
+		fmt.Println(item)
+		go func(id uint64) {
+			for {
+				m, err := redis.Subscribe(c, ChatWithFriend+strconv.FormatUint(id, 10))
+				if err != nil {
+					fmt.Println(err)
+					break
+				}
+				var data models.UserMessage
+				data.ToJson([]byte(m))
+
+				message <- data
+			}
+		}(uint64(item))
+	}
+
 	for {
-		m, err := redis.Subscribe(c, ChatWithFriend+channel)
-		if err != nil {
-			fmt.Println(err)
-			break
-		}
+		//m, err := redis.Subscribe(c, ChatWithFriend)
+		//if err != nil {
+		//	fmt.Println(err)
+		//	break
+		//}
+		msg := <-message
 		tm := time.Now().Format(time.RFC3339Nano)
-		m = fmt.Sprintf("[ws][%s]%s", tm, m)
-		err = ws.WriteMessage(websocket.TextMessage, []byte(m))
-		fmt.Println("订阅消息:", m)
+		msgs := fmt.Sprintf("[ws][%s]%s", tm, string(msg.FromJson()))
+		err := ws.WriteMessage(websocket.TextMessage, []byte(msgs))
+		fmt.Println("订阅消息:", msgs)
 		if err != nil {
 			fmt.Println(err)
 			break

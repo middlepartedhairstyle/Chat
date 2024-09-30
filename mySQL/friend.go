@@ -3,6 +3,7 @@ package mySQL
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 // IsFriend 判断是否为好友
@@ -11,7 +12,6 @@ func (userFriend *UserFriendsTable) IsFriend() bool {
 		UserID   uint64
 		FriendID uint64
 	}
-
 	err := DB.Table(USERFRIENDSTABLE).Where("id=?", userFriend.ID).Select("user_id,friend_id").Scan(&info)
 	if err.Error != nil {
 		return false
@@ -50,3 +50,37 @@ func (userFriend *UserFriendsTable) AddFriend() bool {
 	return false
 }
 
+func SelectAllFriend(id uint) []uint {
+	rows, err := DB.Table(USERFRIENDSTABLE).Where("user_id=? OR friend_id=?", id, id).Select("id").Rows()
+	if err != nil {
+		return nil
+	}
+
+	defer func(rows *sql.Rows) {
+		err = rows.Close()
+		if err != nil {
+
+		}
+	}(rows)
+
+	var friends []uint // 用于存储朋友 ID
+
+	// 循环读取每一行数据
+	for rows.Next() {
+		var friendID uint
+		err = rows.Scan(&friendID) // 将查询到的 ID 扫描到 friendID 变量中
+		if err != nil {
+			fmt.Println("读取行时出错:", err)
+			continue // 如果读取出错，继续处理下一行
+		}
+		friends = append(friends, friendID) // 将 ID 添加到切片中
+	}
+
+	// 检查循环是否出错
+	if err = rows.Err(); err != nil {
+		fmt.Println("遍历 rows 时出错:", err)
+		return nil
+	}
+
+	return friends // 返回所有朋友的 ID
+}
