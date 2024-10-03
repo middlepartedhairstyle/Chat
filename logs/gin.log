@@ -4,15 +4,16 @@
  - using env:	export GIN_MODE=release
  - using code:	gin.SetMode(gin.ReleaseMode)
 
-[GIN-debug] POST   /register                 --> github.com/middlepartedhairstyle/HiWe/controllers.RegisterController (3 handlers)
-[GIN-debug] POST   /login                    --> github.com/middlepartedhairstyle/HiWe/controllers.LoginController (3 handlers)
-[GIN-debug] POST   /sendCode                 --> github.com/middlepartedhairstyle/HiWe/controllers.SendCodeController (3 handlers)
-[GIN-debug] POST   /verifyCode               --> github.com/middlepartedhairstyle/HiWe/controllers.VerifyCodeController (3 handlers)
-[GIN-debug] GET    /addFriend                --> github.com/middlepartedhairstyle/HiWe/controllers.AddFriendController (3 handlers)
-[GIN-debug] GET    /ChatWithFriend           --> github.com/middlepartedhairstyle/HiWe/controllers.ChatWithFriendController (3 handlers)
+[GIN-debug] POST   /register                 --> github.com/middlepartedhairstyle/HiWe/service.Register (4 handlers)
+[GIN-debug] POST   /emailLogin               --> github.com/middlepartedhairstyle/HiWe/service.PassWordLogin (5 handlers)
+[GIN-debug] POST   /codeLogin                --> github.com/middlepartedhairstyle/HiWe/service.CodeLogin (5 handlers)
+[GIN-debug] POST   /sendCode                 --> github.com/middlepartedhairstyle/HiWe/service.SendCode (4 handlers)
+[GIN-debug] POST   /verifyCode               --> github.com/middlepartedhairstyle/HiWe/service.VerifyCode (4 handlers)
+[GIN-debug] GET    /getFriendList            --> github.com/middlepartedhairstyle/HiWe/service.GetFriendList (5 handlers)
+[GIN-debug] GET    /getRequestAddFriendList  --> github.com/middlepartedhairstyle/HiWe/service.GetRequestFriendList (5 handlers)
+[GIN-debug] POST   /requestAddFriend         --> github.com/middlepartedhairstyle/HiWe/service.RequestAddFriend (5 handlers)
+[GIN-debug] POST   /disposeAddFriend         --> github.com/middlepartedhairstyle/HiWe/service.DisposeAddFriend (5 handlers)
 [GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
 Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
 [GIN-debug] Listening and serving HTTP on 127.0.0.1:8080
-[GIN] 2024/09/29 - 23:08:34 | 200 |         506µs |       127.0.0.1 | GET      "/ChatWithFriend?user_id=1"
-[GIN] 2024/09/29 - 23:08:38 | 200 |       694.6µs |       127.0.0.1 | GET      "/ChatWithFriend?user_id=3"
-[GIN] 2024/09/29 - 23:09:01 | 200 |       780.5µs |       127.0.0.1 | GET      "/ChatWithFriend?id=2&user_id=2&friend_id=3"
+[GIN] 2024/10/03 - 17:54:42 | 200 |    1.0677459s |       127.0.0.1 | GET      "/getRequestAddFriendList?id=1"
