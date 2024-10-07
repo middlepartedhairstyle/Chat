@@ -22,6 +22,15 @@ func (friend *Friends) GetFriendList(userId uint) ([]Friends, bool) {
 	return friendList, true
 }
 
+// FindAllFriendId 获取所有好友id
+func FindAllFriendId(userId uint) []uint {
+	var friendList []uint
+	if err := DB.Table(Friend).Where("user_one_id = ? OR user_two_id = ?", userId, userId).Select("id").Find(&friendList).Error; err != nil {
+		return nil
+	}
+	return friendList
+}
+
 // AddFriend 添加好友
 func (friend *Friends) AddFriend() bool {
 	err := DB.Table(Friend).Create(&friend).Error

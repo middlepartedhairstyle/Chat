@@ -19,7 +19,7 @@ func Routers(router *gin.Engine) {
 	router.POST("requestAddFriend", middleware.RateLimiter("requestAddFriend"), middleware.CheckToken, service.RequestAddFriend)
 	router.POST("disposeAddFriend", middleware.RateLimiter("requestRemoveFriend"), middleware.CheckToken, service.DisposeAddFriend)
 
-	////msg
-	//router.GET("/ChatWithFriend", controllers.ChatWithFriendController)
+	//msg
+	router.GET("/ChatWithFriend", middleware.CheckToken, service.Chat)
 
 }
