@@ -13,6 +13,6 @@ func Chat(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	go client.SendMessage()
+	go client.SendMessage(userId)
 	go client.GetMessage(userId)
 }

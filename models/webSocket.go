@@ -2,11 +2,12 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	Kafka "github.com/middlepartedhairstyle/HiWe/kafka"
-	"github.com/middlepartedhairstyle/HiWe/mySQL"
+	"github.com/segmentio/kafka-go"
 	"net/http"
 	"strconv"
 	"time"
@@ -15,8 +16,8 @@ import (
 type WebSocketClient struct {
 	Conn        *websocket.Conn
 	Context     *gin.Context
-	messageList chan UserMessage
-	UserMessage
+	FromId      uint `json:"from_id"`
+	messageList chan []byte
 }
 
 // NewWebSocketClient 创建一个新的webSocket连接
@@ -29,9 +30,9 @@ func NewWebSocketClient(c *gin.Context, check bool, userId uint) (*WebSocketClie
 		},
 	}
 	ws.Conn, err = upGrader.Upgrade(c.Writer, c.Request, nil)
-	ws.FromID = userId
+	ws.FromId = userId
 	ws.Context = c
-	ws.messageList = make(chan UserMessage, 50)
+	ws.messageList = make(chan []byte, 50)
 	return ws, err
 }
 
@@ -41,28 +42,24 @@ func (ws *WebSocketClient) Close() error {
 }
 
 // ReadMessage 读取消息
-func (ws *WebSocketClient) ReadMessage() (UserMessage, error) {
-	var msg UserMessage
+func (ws *WebSocketClient) ReadMessage() ([]byte, Information, error) {
+	msg := NewInfo()
 	_, data, err := ws.Conn.ReadMessage()
 	if err != nil {
-		return msg, err
+		return nil, nil, err
 	}
-	msg, err = ws.Unmarshal(data)
+	err = json.Unmarshal(data, &msg)
 	if err != nil {
-		return msg, err
+		return nil, nil, err
 	}
-	return msg, nil
+	return data, msg.CheckType(), nil
 }
 
 // WriteMessage 写入消息
-func (ws *WebSocketClient) WriteMessage(messageType int, message UserMessage) error {
+func (ws *WebSocketClient) WriteMessage(messageType int, message []byte) error {
 	tm := time.Now().Format(time.DateTime)
-	msg, err := message.Marshal(message)
-	if err != nil {
-		return err
-	}
-	data := fmt.Sprintf("[ws][%s]%s", tm, msg)
-	err = ws.Conn.WriteMessage(messageType, []byte(data))
+	data := fmt.Sprintf("[ws][%s]%s", tm, message)
+	err := ws.Conn.WriteMessage(messageType, []byte(data))
 	if err != nil {
 		return err
 	}
@@ -70,72 +67,104 @@ func (ws *WebSocketClient) WriteMessage(messageType int, message UserMessage) er
 }
 
 // SendMessage 发送消息
-func (ws *WebSocketClient) SendMessage() {
+func (ws *WebSocketClient) SendMessage(fromId uint) {
+	var producers = make(map[string]*Kafka.Producer) //[topic]*Producer
+	var consumers = make(map[uint]uint)              //指定消息接收者[friendID/groupID]userID
 	for {
-		msg, err := ws.ReadMessage()
+		msg, ucm, err := ws.ReadMessage()
 		if err != nil {
+			fmt.Println(err)
+			err = ws.Close()
+			if err != nil {
+				return
+			}
+			break
+		}
+		if ucm == nil {
 			fmt.Println(err)
 			continue
 		}
-
-		bytes, err := ws.Marshal(msg)
-		if err != nil {
-			return
+		var consumer uint //userID
+		var producer *Kafka.Producer
+		//指定消息接收者
+		info := ucm.GetInformation("toID")
+		toID := info["toID"].(uint)
+		if consumers[toID] != 0 {
+			consumer = consumers[toID]
+		} else {
+			//添加指定消息接收者
+			consumers[toID] = ucm.SetConsumerID()
+			consumer = consumers[toID]
 		}
-		err = Kafka.Producer(ws.MessageChannel(msg.Media, msg.ToID), string(bytes))
+
+		//查看是否有该topic,有就使用没有就新建
+		if producers[ucm.SetTopic(consumer)] != nil {
+			producer = producers[ucm.SetTopic(consumer)]
+		} else {
+			producer = Kafka.NewProducer(Kafka.SetProducerTopic(ucm.SetTopic(consumer)))
+			producers[ucm.SetTopic(consumer)] = producer
+		}
+
+		key := []byte(strconv.Itoa(int(consumer)))
+		err = producer.WriteData(&key, &msg)
+
+		//自己接收自己的信息,测试部分
+		key = []byte(strconv.Itoa(int(fromId)))
+		err = producer.WriteData(&key, &msg)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
 	}
+
 }
 
 // GetMessage 获取消息
 func (ws *WebSocketClient) GetMessage(id uint) {
-
+	// 查找用户消息
 	go func(id uint) {
-		r := Kafka.NewConsumer(Kafka.SetGroupID(ChatWithFriend + strconv.FormatUint(uint64(id), 10)))
-		//查找好友
-		var friendIDs []string
-		for _, item := range mySQL.FindAllFriendId(id) {
-			friendIDs = append(friendIDs, ChatWithFriend+strconv.Itoa(int(item)))
-		}
-		for {
-			m, err := r.ReadMessage(context.Background())
-			if err != nil {
-				break
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Println("Recovering from panic in GetMessage:", r)
 			}
-			var message string
-			for index, key := range friendIDs {
-				if string(m.Key) == key {
-					message = string(m.Value)
-					if err != nil {
-						fmt.Println(err)
-						break
-					}
-					var data UserMessage
-					data, err = data.Unmarshal([]byte(message))
-					if err != nil {
-						return
-					}
-					ws.messageList <- data
-					break // 找到匹配后可以退出循环
-				}
-				if index == len(friendIDs)-1 {
-					if err = r.CommitMessages(context.Background(), m); err != nil {
-						fmt.Printf("提交偏移量失败: %v\n", err)
-					}
+		}()
+
+		var message []byte // 消息
+		var tpId = id/maxUserNum + 1
+		topic := fmt.Sprintf("%s%s%d", ChatWithFriend, "tp", tpId) // 例如 ftp1, ftp2
+		consumer := Kafka.NewConsumer(Kafka.SetConsumerTopic(topic), Kafka.SetConsumerGroupID(strconv.Itoa(int(id))))
+		defer func(consumer *kafka.Reader) {
+			err := consumer.Close()
+			if err != nil {
+
+			}
+		}(consumer) // 确保消费者关闭
+
+		for {
+			m, err := consumer.ReadMessage(context.Background())
+			if err != nil {
+				fmt.Println("Error reading message:", err)
+				continue
+			}
+			if string(m.Key) == strconv.Itoa(int(id)) {
+				message = m.Value
+				ws.messageList <- message
+			} else {
+				if err = consumer.CommitMessages(context.Background(), m); err != nil {
+					fmt.Printf("提交偏移量失败: %v\n", err)
 				}
 			}
 		}
 	}(id)
-	//消息写入websocket
+
+	// 消息写入 websocket
 	for {
 		select {
 		case msg := <-ws.messageList:
 			err := ws.WriteMessage(websocket.TextMessage, msg)
 			if err != nil {
-				break
+				fmt.Println("Error writing message to websocket:", err)
+				continue
 			}
 		}
 	}

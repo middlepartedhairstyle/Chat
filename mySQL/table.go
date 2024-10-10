@@ -3,14 +3,14 @@ package mySQL
 import "gorm.io/gorm"
 
 const (
-	UserBaseInfo     string = "user_base_info_tables"
-	GroupNum         string = "group_num_tables"
-	GroupMessage     string = "group_messages_tables"
-	GroupUser        string = "group_user_tables"
-	FriendMessage    string = "friend_message_tables"
-	Friend           string = "friends_tables"
-	RequestAddFriend string = "request_add_friend_tables"
-	RequestAddGroup  string = "request_add_group_tables"
+	UserBaseInfoT     string = "user_base_info_tables"
+	GroupNumT         string = "group_num_tables"
+	GroupMessageT     string = "group_messages_tables"
+	GroupUserT        string = "group_user_tables"
+	FriendMessageT    string = "friend_message_tables"
+	FriendT           string = "friends_tables"
+	RequestAddFriendT string = "request_add_friend_tables"
+	RequestAddGroup   string = "request_add_group_tables"
 )
 
 // UserBaseInfoTable 用户基础信息(数据库)

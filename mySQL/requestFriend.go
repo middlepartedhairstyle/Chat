@@ -22,7 +22,7 @@ func (request *RequestFriend) InsertInto() bool {
 	//默认为等待
 	request.State = 1
 
-	err := DB.Table(RequestAddFriend).Create(request).Error
+	err := DB.Table(RequestAddFriendT).Create(request).Error
 	if err != nil {
 		return false
 	}
@@ -32,7 +32,7 @@ func (request *RequestFriend) InsertInto() bool {
 // HaveRequest 使用from_id,to_id判断是否存在该好友请求
 func (request *RequestFriend) HaveRequest() bool {
 	var count int64
-	err := DB.Table(RequestAddFriend).Where("from_request_id=? AND to_request_id=?", request.FromRequestID, request.ToRequestID).Count(&count).Error
+	err := DB.Table(RequestAddFriendT).Where("from_request_id=? AND to_request_id=?", request.FromRequestID, request.ToRequestID).Count(&count).Error
 	if err != nil {
 		return false
 	}
@@ -42,7 +42,7 @@ func (request *RequestFriend) HaveRequest() bool {
 // GetID 使用from_id,to_id获取好友请求id
 func (request *RequestFriend) GetID() uint {
 	var id uint
-	err := DB.Table(RequestAddFriend).Where("from_request_id=? AND to_request_id=?", request.FromRequestID, request.ToRequestID).Select("id").Find(&id).Error
+	err := DB.Table(RequestAddFriendT).Where("from_request_id=? AND to_request_id=?", request.FromRequestID, request.ToRequestID).Select("id").Find(&id).Error
 	if err != nil {
 		return 0
 	}
@@ -51,7 +51,7 @@ func (request *RequestFriend) GetID() uint {
 
 // GetState 获取状态
 func (request *RequestFriend) GetState() {
-	err := DB.Table(RequestAddFriend).Where("id", request.ID).Select("state").Find(&(*request).State).Error
+	err := DB.Table(RequestAddFriendT).Where("id", request.ID).Select("state").Find(&(*request).State).Error
 	if err != nil {
 		return
 	}
@@ -60,7 +60,7 @@ func (request *RequestFriend) GetState() {
 // GetAllRequest 返回所有被请求信息
 func (request *RequestFriend) GetAllRequest() ([]RequestFriend, bool) {
 	var requestList []RequestFriend
-	err := DB.Table(RequestAddFriend).Where("to_request_id=? OR from_request_id=?", request.ToRequestID, request.ToRequestID).Find(&requestList).Error
+	err := DB.Table(RequestAddFriendT).Where("to_request_id=? OR from_request_id=?", request.ToRequestID, request.ToRequestID).Find(&requestList).Error
 	if err != nil {
 		return nil, false
 	} else {
@@ -70,7 +70,7 @@ func (request *RequestFriend) GetAllRequest() ([]RequestFriend, bool) {
 
 // SetState 设置状态
 func (request *RequestFriend) SetState(state uint8) {
-	err := DB.Table(RequestAddFriend).Where("id", request.ID).Update("state", state).Error
+	err := DB.Table(RequestAddFriendT).Where("id", request.ID).Update("state", state).Error
 	if err != nil {
 		return
 	}
@@ -78,7 +78,7 @@ func (request *RequestFriend) SetState(state uint8) {
 
 // RemoveRequest 删除好友请求
 func (request *RequestFriend) RemoveRequest() bool {
-	if err := DB.Table(RequestAddFriend).Where("id = ?", request.ID).Delete(&RequestAddFriendTable{}); err != nil {
+	if err := DB.Table(RequestAddFriendT).Where("id = ?", request.ID).Delete(&RequestAddFriendTable{}); err != nil {
 		return false // 删除出错时返回 false
 	}
 	return true // 删除成功返回 true

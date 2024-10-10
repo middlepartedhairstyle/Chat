@@ -17,6 +17,6 @@
 [GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
 Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
 [GIN-debug] Listening and serving HTTP on 127.0.0.1:8080
-[GIN] 2024/10/07 - 15:26:17 | 200 |    292.1951ms |       127.0.0.1 | GET      "/ChatWithFriend?user_id=4"
-[GIN] 2024/10/07 - 15:26:18 | 200 |    274.7857ms |       127.0.0.1 | GET      "/ChatWithFriend?user_id=1"
-[GIN] 2024/10/07 - 15:26:20 | 200 |    292.1028ms |       127.0.0.1 | GET      "/ChatWithFriend?user_id=2"
+[GIN] 2024/10/10 - 23:17:10 | 200 |     302.568ms |       127.0.0.1 | GET      "/ChatWithFriend?user_id=4"
+[GIN] 2024/10/10 - 23:17:13 | 200 |    961.7741ms |       127.0.0.1 | GET      "/ChatWithFriend?user_id=1"
+[GIN] 2024/10/10 - 23:18:36 | 200 |     931.298ms |       127.0.0.1 | GET      "/ChatWithFriend?user_id=2"

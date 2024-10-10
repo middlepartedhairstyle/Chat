@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"strconv"
 )
@@ -35,4 +37,14 @@ func StringToUint8(str string) (uint8, error) {
 	// 转换为 uint (适用于32位和64位平台)
 	var unsignedInt uint8 = uint8(unsignedInt64)
 	return unsignedInt, nil
+}
+
+// UintToBytes uint转[]byte
+func UintToBytes(num uint) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	err := binary.Write(buf, binary.LittleEndian, num) // 使用大端字节序
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

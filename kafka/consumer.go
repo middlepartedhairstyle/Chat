@@ -6,29 +6,29 @@ import (
 
 type SetConsumerGroupConfig func(config *kafka.ReaderConfig)
 
-// SetTopic 设置消费者的topic
-func SetTopic(str string) SetConsumerGroupConfig {
+// SetConsumerTopic 设置消费者的topic
+func SetConsumerTopic(str string) SetConsumerGroupConfig {
 	return func(config *kafka.ReaderConfig) {
 		config.Topic = str
 	}
 }
 
-// SetBrokers 设置消费者broker
-func SetBrokers(broker []string) SetConsumerGroupConfig {
+// SetConsumerBrokers 设置消费者broker
+func SetConsumerBrokers(broker []string) SetConsumerGroupConfig {
 	return func(config *kafka.ReaderConfig) {
 		config.Brokers = broker
 	}
 }
 
-// SetGroupID 设置消费者groupID
-func SetGroupID(str string) SetConsumerGroupConfig {
+// SetConsumerGroupID 设置消费者groupID
+func SetConsumerGroupID(str string) SetConsumerGroupConfig {
 	return func(config *kafka.ReaderConfig) {
 		config.GroupID = str
 	}
 }
 
-// SetMaxBytes 设置消费者maxBytes
-func SetMaxBytes(max int) SetConsumerGroupConfig {
+// SetConsumerMaxBytes 设置消费者maxBytes
+func SetConsumerMaxBytes(max int) SetConsumerGroupConfig {
 	return func(config *kafka.ReaderConfig) {
 		config.MaxBytes = max
 	}
@@ -39,7 +39,7 @@ func NewConsumer(cfg ...SetConsumerGroupConfig) *kafka.Reader {
 	// make a new reader that consumes from topic-A
 	var config = kafka.ReaderConfig{
 		Brokers:  []string{"23.95.15.178:9092"},
-		GroupID:  "f",
+		GroupID:  "0",
 		Topic:    "tp1",
 		MaxBytes: 10e6, // 10MB
 	}

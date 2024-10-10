@@ -15,7 +15,7 @@ type Friends struct {
 func (friend *Friends) GetFriendList(userId uint) ([]Friends, bool) {
 	var friendList []Friends
 	// 使用 GORM 的 Find 方法来查询
-	if err := DB.Table(Friend).Where("user_one_id = ? OR user_two_id = ?", userId, userId).Find(&friendList).Error; err != nil {
+	if err := DB.Table(FriendT).Where("user_one_id = ? OR user_two_id = ?", userId, userId).Find(&friendList).Error; err != nil {
 		return nil, false
 	}
 	// 返回好友列表
@@ -25,7 +25,7 @@ func (friend *Friends) GetFriendList(userId uint) ([]Friends, bool) {
 // FindAllFriendId 获取所有好友id
 func FindAllFriendId(userId uint) []uint {
 	var friendList []uint
-	if err := DB.Table(Friend).Where("user_one_id = ? OR user_two_id = ?", userId, userId).Select("id").Find(&friendList).Error; err != nil {
+	if err := DB.Table(FriendT).Where("user_one_id = ? OR user_two_id = ?", userId, userId).Select("id").Find(&friendList).Error; err != nil {
 		return nil
 	}
 	return friendList
@@ -33,7 +33,7 @@ func FindAllFriendId(userId uint) []uint {
 
 // AddFriend 添加好友
 func (friend *Friends) AddFriend() bool {
-	err := DB.Table(Friend).Create(&friend).Error
+	err := DB.Table(FriendT).Create(&friend).Error
 	if err != nil {
 		return false
 	}
@@ -43,9 +43,17 @@ func (friend *Friends) AddFriend() bool {
 // IsFriend 判断是否为好友
 func (friend *Friends) IsFriend() bool {
 	var count int64
-	err := DB.Table(Friend).Where("(user_one_id = ? AND user_two_id = ?) OR (user_one_id = ? AND user_two_id = ?)", friend.UserOneID, friend.UserTwoID, friend.UserTwoID, friend.UserOneID).Count(&count).Error
+	err := DB.Table(FriendT).Where("(user_one_id = ? AND user_two_id = ?) OR (user_one_id = ? AND user_two_id = ?)", friend.UserOneID, friend.UserTwoID, friend.UserTwoID, friend.UserOneID).Count(&count).Error
 	if err != nil {
 		return false
 	}
 	return count > 0
+}
+
+// FindTwoUserID 寻找两好友的id
+func (friend *Friends) FindTwoUserID() bool {
+	if err := DB.Table(FriendT).Where("id = ?",friend.ID).Select("user_one_id,user_two_id").Find(&friend).Error; err != nil {
+		return false
+	}
+	return true
 }

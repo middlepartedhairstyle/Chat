@@ -3,7 +3,7 @@ package mySQL
 // UseEmailSelect 使用邮箱查询用户数据
 func (user *UserBaseInfoTable) UseEmailSelect() (bool, error) {
 	var count int64
-	err := DB.Table(UserBaseInfo).Where("email=?", user.Email).Count(&count).Error
+	err := DB.Table(UserBaseInfoT).Where("email=?", user.Email).Count(&count).Error
 	//错误处理,不为空返回错误
 	if err != nil {
 		return false, err
@@ -13,7 +13,7 @@ func (user *UserBaseInfoTable) UseEmailSelect() (bool, error) {
 		return false, nil
 	} else {
 		//有该邮箱就将用户数据写入该结构体中
-		err = DB.Table(UserBaseInfo).Where("email=?", user.Email).Select("*").Scan(user).Error
+		err = DB.Table(UserBaseInfoT).Where("email=?", user.Email).Select("*").Scan(user).Error
 		//如果错误返回err
 		if err != nil {
 			return true, err
@@ -24,7 +24,7 @@ func (user *UserBaseInfoTable) UseEmailSelect() (bool, error) {
 
 // Create 创建新用户
 func (user *UserBaseInfoTable) Create() error {
-	err := DB.Table(UserBaseInfo).Create(user).Error
+	err := DB.Table(UserBaseInfoT).Create(user).Error
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func (user *UserBaseInfoTable) Create() error {
 }
 
 func (user *UserBaseInfoTable) UpdateToken() bool {
-	err := DB.Table(UserBaseInfo).Where("email=?", user.Email).Update("token", user.Token).Error
+	err := DB.Table(UserBaseInfoT).Where("email=?", user.Email).Update("token", user.Token).Error
 	if err != nil {
 		return false
 	}
@@ -42,7 +42,7 @@ func (user *UserBaseInfoTable) UpdateToken() bool {
 // CheckToken 确认用户token
 func (user *UserBaseInfoTable) CheckToken() bool {
 	var token string
-	err := DB.Table(UserBaseInfo).Where("id=?", user.ID).Select("token").Scan(&token).Error
+	err := DB.Table(UserBaseInfoT).Where("id=?", user.ID).Select("token").Scan(&token).Error
 	if err != nil {
 		return false
 	}
@@ -55,7 +55,7 @@ func (user *UserBaseInfoTable) CheckToken() bool {
 // FindId 使用邮箱查找用户id
 func (user *UserBaseInfoTable) FindId() bool {
 	var id uint
-	err := DB.Table(UserBaseInfo).Where("email=?", user.Email).Select("id").Scan(&id).Error
+	err := DB.Table(UserBaseInfoT).Where("email=?", user.Email).Select("id").Scan(&id).Error
 	if err != nil {
 		return false
 	}

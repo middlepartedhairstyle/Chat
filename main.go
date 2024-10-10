@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	Kafka "github.com/middlepartedhairstyle/HiWe/kafka"
 	"github.com/middlepartedhairstyle/HiWe/mySQL"
 	"github.com/middlepartedhairstyle/HiWe/redis"
 	"github.com/middlepartedhairstyle/HiWe/routers"
@@ -15,7 +14,6 @@ func init() {
 	utils.ReadConfig("config/config.yaml")
 	mySQL.Init() //mysql初始化
 	redis.Init() //redis初始化
-	Kafka.Init() //kafka连接
 }
 
 func main() {
