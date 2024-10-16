@@ -84,16 +84,28 @@ func (ws *WebSocketClient) SendMessage(fromId uint) {
 			fmt.Println(err)
 			continue
 		}
+		//消息正确性验证
+		info := ucm.GetInformation("fromID")
+		id := info["fromID"].(uint)
+		if id != fromId {
+			continue
+		}
+
 		var consumer uint //userID
 		var producer *Kafka.Producer
 		//指定消息接收者
-		info := ucm.GetInformation("toID")
+		info = ucm.GetInformation("toID")
 		toID := info["toID"].(uint)
 		if consumers[toID] != 0 {
 			consumer = consumers[toID]
 		} else {
 			//添加指定消息接收者
-			consumers[toID] = ucm.SetConsumerID()
+			consumersID := ucm.SetConsumerID()
+			if consumersID == 0 {
+				fmt.Println("不存在该好友")
+				continue
+			}
+			consumers[toID] = consumersID
 			consumer = consumers[toID]
 		}
 
@@ -115,6 +127,8 @@ func (ws *WebSocketClient) SendMessage(fromId uint) {
 			fmt.Println(err)
 			continue
 		}
+		//将数据持续化存入服务器
+		go ucm.MessageDispose()
 	}
 
 }

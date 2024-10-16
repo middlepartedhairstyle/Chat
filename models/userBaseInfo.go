@@ -62,6 +62,9 @@ func (user *UserBaseInfo) CreateUser() bool {
 	}
 }
 
+// Delete 删除用户信息
+func (user *UserBaseInfo) Delete() {}
+
 // UserInfo 获取用户基本信息
 func (user *UserBaseInfo) UserInfo() bool {
 	var u mySQL.UserBaseInfoTable
@@ -195,5 +198,20 @@ func (user *UserBaseInfo) DisposeAddFriend(f mySQL.Friends, requestId uint, stat
 
 // DeleteFriend 删除好友(待完善)
 func (user *UserBaseInfo) DeleteFriend() bool { return false }
-func (user *UserBaseInfo) Delete()            {}
-func (user *UserBaseInfo) Get()               {}
+
+// CreateGroup 新建群
+func (user *UserBaseInfo) CreateGroup(groupName string) bool {
+	groupNum := mySQL.NewGroupNum(mySQL.SetGroupLeaderID(user.Id), mySQL.SetGroupName(groupName))
+	return groupNum.CreateGroup()
+}
+
+// FindAllCreateGroup 寻找用户创建的所有群聊
+func (user *UserBaseInfo) FindAllCreateGroup() []mySQL.GroupNum {
+	groupNum := mySQL.NewGroupNum(mySQL.SetGroupLeaderID(user.Id))
+	return groupNum.FindAllCreateGroup()
+}
+
+func (user *UserBaseInfo) FindAllGroup() []mySQL.GroupUser {
+	groupUser := mySQL.NewGroupUser(mySQL.SetUserID(user.Id))
+	return groupUser.FindAllGroup()
+}

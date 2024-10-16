@@ -64,6 +64,7 @@ type GroupNumTable struct {
 	GroupLeaderID uint              //群主id
 	GroupName     string            `gorm:"type:varchar(25)"` //群名
 	Visible       bool              `gorm:"type:tinyint(1)"`  //该群是否可以被搜索
+	Verify		  uint8             `gorm:"type:tinyint(1)"`  //添加该群是否需要群主同意,0需要,1不需要······
 }
 
 // GroupUserTable 用户群的用户(数据库)

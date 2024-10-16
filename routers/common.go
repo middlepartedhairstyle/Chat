@@ -13,12 +13,15 @@ func Routers(router *gin.Engine) {
 	router.POST("/codeLogin", middleware.RateLimiter("codeLogin"), middleware.LimitLogin("codeLogin"), service.CodeLogin)
 	router.POST("/sendCode", middleware.RateLimiter("sendCode"), service.SendCode)
 	router.POST("/verifyCode", middleware.RateLimiter("verifyCode"), service.VerifyCode)
-	//
+	//用户好友功能
 	router.GET("getFriendList", middleware.RateLimiter("getFriendList"), middleware.CheckToken, service.GetFriendList)
 	router.GET("getRequestAddFriendList", middleware.RateLimiter("getRequestAddFriendList"), middleware.CheckToken, service.GetRequestFriendList)
 	router.POST("requestAddFriend", middleware.RateLimiter("requestAddFriend"), middleware.CheckToken, service.RequestAddFriend)
 	router.POST("disposeAddFriend", middleware.RateLimiter("requestRemoveFriend"), middleware.CheckToken, service.DisposeAddFriend)
-
+	//用户群功能
+	router.POST("createGroup", middleware.RateLimiter("createGroup"), middleware.CheckToken, service.CreateGroup)
+	router.GET("findAllCreateGroup", middleware.RateLimiter("findAllCreateGroup"), middleware.CheckToken, service.GetCreateGroupList)
+	router.GET("findAllGroup", middleware.RateLimiter("findAllGroup"), middleware.CheckToken, service.GetAllGroupList)
 	//msg
 	router.GET("/ChatWithFriend", middleware.CheckToken, service.Chat)
 
