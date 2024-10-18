@@ -12,16 +12,11 @@ func CreateGroup(c *gin.Context) {
 	id := c.GetHeader("id")
 	groupName, _ := c.GetPostForm("group_name")
 	user.Id, _ = utils.StringToUint(id)
-	b := user.CreateGroup(groupName)
+	group, b := user.CreateGroup(groupName)
 	if b {
-		utils.Success(c, "成功", gin.H{
-			"id":   user.Id,
-			"name": groupName,
-		})
+		utils.Success(c, "成功", group)
 	} else {
-		utils.Fail(c, "错误", gin.H{
-			"id": user.Id,
-		})
+		utils.Fail(c, "错误", group)
 	}
 }
 
@@ -42,6 +37,20 @@ func GetAllGroupList(c *gin.Context) {
 	groupUser := user.FindAllGroup()
 	utils.Success(c, "成功", groupUser)
 }
+
+// FindGroup 寻找群
+func FindGroup(c *gin.Context) {
+	var user models.UserBaseInfo
+	info := c.Query("group_info")
+	groupUser := user.FindGroup(info)
+	utils.Success(c, "成功", groupUser)
+}
+
+// AddGroup 添加群聊
+func AddGroup(c *gin.Context) {
+
+}
+
 func GetRequestGroupList(c *gin.Context) {}
 func RequestAddGroup(c *gin.Context)     {}
 func DisposeAddGroup(c *gin.Context)     {}

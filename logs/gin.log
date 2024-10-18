@@ -16,9 +16,10 @@
 [GIN-debug] POST   /createGroup              --> github.com/middlepartedhairstyle/HiWe/service.CreateGroup (5 handlers)
 [GIN-debug] GET    /findAllCreateGroup       --> github.com/middlepartedhairstyle/HiWe/service.GetCreateGroupList (5 handlers)
 [GIN-debug] GET    /findAllGroup             --> github.com/middlepartedhairstyle/HiWe/service.GetAllGroupList (5 handlers)
+[GIN-debug] GET    /findGroup                --> github.com/middlepartedhairstyle/HiWe/service.FindGroup (5 handlers)
 [GIN-debug] GET    /ChatWithFriend           --> github.com/middlepartedhairstyle/HiWe/service.Chat (4 handlers)
 [GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
 Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
 [GIN-debug] Listening and serving HTTP on 127.0.0.1:8080
-[GIN] 2024/10/16 - 17:21:39 | 200 |    295.6757ms |       127.0.0.1 | GET      "/ChatWithFriend?user_id=4"
-[GIN] 2024/10/16 - 17:21:52 | 200 |      292.64ms |       127.0.0.1 | GET      "/ChatWithFriend?user_id=1"
+[GIN] 2024/10/18 - 17:00:45 | 200 |    1.0784539s |       127.0.0.1 | POST     "/createGroup"
+[GIN] 2024/10/18 - 17:00:50 | 200 |    817.5299ms |       127.0.0.1 | POST     "/createGroup"

@@ -22,6 +22,7 @@ func Routers(router *gin.Engine) {
 	router.POST("createGroup", middleware.RateLimiter("createGroup"), middleware.CheckToken, service.CreateGroup)
 	router.GET("findAllCreateGroup", middleware.RateLimiter("findAllCreateGroup"), middleware.CheckToken, service.GetCreateGroupList)
 	router.GET("findAllGroup", middleware.RateLimiter("findAllGroup"), middleware.CheckToken, service.GetAllGroupList)
+	router.GET("findGroup", middleware.RateLimiter("findGroup"), middleware.CheckToken, service.FindGroup)
 	//msg
 	router.GET("/ChatWithFriend", middleware.CheckToken, service.Chat)
 

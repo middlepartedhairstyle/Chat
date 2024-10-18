@@ -200,9 +200,12 @@ func (user *UserBaseInfo) DisposeAddFriend(f mySQL.Friends, requestId uint, stat
 func (user *UserBaseInfo) DeleteFriend() bool { return false }
 
 // CreateGroup 新建群
-func (user *UserBaseInfo) CreateGroup(groupName string) bool {
+func (user *UserBaseInfo) CreateGroup(groupName string) (*mySQL.GroupNum, bool) {
 	groupNum := mySQL.NewGroupNum(mySQL.SetGroupLeaderID(user.Id), mySQL.SetGroupName(groupName))
-	return groupNum.CreateGroup()
+	if groupNum.CreateGroup() {
+		return groupNum, true
+	}
+	return nil, false
 }
 
 // FindAllCreateGroup 寻找用户创建的所有群聊
@@ -211,7 +214,27 @@ func (user *UserBaseInfo) FindAllCreateGroup() []mySQL.GroupNum {
 	return groupNum.FindAllCreateGroup()
 }
 
+// FindAllGroup 寻找用户加入的所有群聊
 func (user *UserBaseInfo) FindAllGroup() []mySQL.GroupUser {
 	groupUser := mySQL.NewGroupUser(mySQL.SetUserID(user.Id))
 	return groupUser.FindAllGroup()
 }
+
+// FindGroup 使用群id寻找群
+func (user *UserBaseInfo) FindGroup(groupInfo string) []mySQL.GroupNum {
+	info, err := utils.StringToUint(groupInfo)
+	switch err {
+	case nil:
+		group := mySQL.NewGroupNum(mySQL.SetGroupNumID(info))
+		return group.UseGroupIDFind()
+	default:
+		group := mySQL.NewGroupNum(mySQL.SetGroupName(groupInfo))
+		return group.UseGroupNameFind()
+	}
+}
+
+// AddGroup 添加群聊
+func (user *UserBaseInfo) AddGroup() bool { return false }
+
+// DisposeAddGroup 处理用户添加群聊，应使用冷热结合的方法，过久没有处理就存入数据库
+func (user *UserBaseInfo) DisposeAddGroup() bool { return false }

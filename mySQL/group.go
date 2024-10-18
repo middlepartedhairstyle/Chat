@@ -10,12 +10,19 @@ type GroupNum struct {
 	GroupLeaderID uint   //群主id
 	GroupName     string `gorm:"type:varchar(25)"` //群名
 	Visible       bool   `gorm:"type:tinyint(1)"`  //该群是否可以被搜索
-	Verify        uint8  `gorm:"type:tinyint(1)"`  //添加该群是否需要群主同意,0需要,1不需要······
+	Verify        uint8  `gorm:"type:tinyint(1)"`  //添加该群是否需要群主同意,0不需要,1需要······
 }
 
 const maxGroupNum = 100
 
 type GroupNumOpt func(*GroupNum)
+
+// SetGroupNumID 设置groupID
+func SetGroupNumID(groupID uint) GroupNumOpt {
+	return func(g *GroupNum) {
+		g.ID = groupID
+	}
+}
 
 // SetGroupLeaderID 设置群主id
 func SetGroupLeaderID(groupLeaderID uint) GroupNumOpt {
@@ -50,7 +57,7 @@ func NewGroupNum(opts ...GroupNumOpt) *GroupNum {
 	groupNum := &GroupNum{
 		GroupLeaderID: 0,
 		GroupName:     "",
-		Visible:       false,
+		Visible:       true,
 		Verify:        0,
 	}
 	for _, opt := range opts {
@@ -88,6 +95,26 @@ func (group *GroupNum) CreateGroup() bool {
 func (group *GroupNum) FindAllCreateGroup() []GroupNum {
 	var groups []GroupNum
 	err := DB.Table(GroupNumT).Where("group_leader_id = ?", group.GroupLeaderID).Find(&groups).Error
+	if err != nil {
+		return nil
+	}
+	return groups
+}
+
+// UseGroupIDFind 使用群id找群
+func (group *GroupNum) UseGroupIDFind() []GroupNum {
+	var groups []GroupNum
+	err := DB.Table(GroupNumT).Where("id = ? and visible = ?", group.ID, true).Find(&groups).Error
+	if err != nil {
+		return nil
+	}
+	return groups
+}
+
+// UseGroupNameFind	使用群名称找群
+func (group *GroupNum) UseGroupNameFind() []GroupNum {
+	var groups []GroupNum
+	err := DB.Table(GroupNumT).Where("group_name = ? and visible = ?", group.GroupName, true).Find(&groups).Error
 	if err != nil {
 		return nil
 	}

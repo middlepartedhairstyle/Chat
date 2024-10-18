@@ -10,7 +10,7 @@ const (
 	FriendMessageT    string = "friend_message_tables"
 	FriendT           string = "friends_tables"
 	RequestAddFriendT string = "request_add_friend_tables"
-	RequestAddGroup   string = "request_add_group_tables"
+	RequestAddGroupT   string = "request_add_group_tables"
 )
 
 // UserBaseInfoTable 用户基础信息(数据库)
