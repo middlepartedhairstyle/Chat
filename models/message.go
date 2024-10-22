@@ -2,7 +2,9 @@ package models
 
 import (
 	"fmt"
+	Kafka "github.com/middlepartedhairstyle/HiWe/kafka"
 	"github.com/middlepartedhairstyle/HiWe/mySQL"
+	"strconv"
 )
 
 // 消息类型
@@ -36,7 +38,7 @@ type UserChatMessage struct {
 
 type Information interface {
 	SetTopic(topic uint) string
-	MessageDispose() bool
+	MessageDispose(producers map[string]*Kafka.Producer, fromID uint, message []byte)
 	SetConsumerID() uint
 	GetInformation(opts ...string) map[string]interface{}
 }
@@ -105,7 +107,19 @@ func (userMessage *UserChatMessage) SetConsumerID() uint {
 }
 
 // MessageDispose 消息处理
-func (userMessage *UserChatMessage) MessageDispose() bool {
+func (userMessage *UserChatMessage) MessageDispose(producers map[string]*Kafka.Producer, fromID uint, message []byte) {
+	switch userMessage.Media {
+	case MediaFriend:
+		userMessage.IsFriendMessage(producers, fromID, message)
+	case MediaGroup:
+	default:
+		panic("unhandled default case")
+
+	}
+}
+
+// MessageTypeDispose 消息处理
+func (userMessage *UserChatMessage) MessageTypeDispose() bool {
 
 	switch userMessage.MessageType {
 	//消息类型为文本
@@ -121,4 +135,32 @@ func (userMessage *UserChatMessage) MessageDispose() bool {
 	default:
 		return false
 	}
+}
+
+func (userMessage *UserChatMessage) IsFriendMessage(producers map[string]*Kafka.Producer, fromID uint, message []byte) {
+	//消息正确性验证
+	if userMessage.FromID != fromID {
+		return
+	}
+	var producer *Kafka.Producer
+	//查看是否有该topic,有就使用没有就新建
+	if producers[userMessage.SetTopic(userMessage.ToID)] != nil {
+		producer = producers[userMessage.SetTopic(userMessage.ToID)]
+	} else {
+		producer = Kafka.NewProducer(Kafka.SetProducerTopic(userMessage.SetTopic(userMessage.ToID)))
+		producers[userMessage.SetTopic(userMessage.ToID)] = producer
+	}
+
+	key := []byte(strconv.Itoa(int(userMessage.ToID)))
+	err := producer.WriteData(&key, &message)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	//自己接收自己的信息,测试部分
+	key = []byte(strconv.Itoa(int(fromID)))
+	err = producer.WriteData(&key, &message)
+
+	//将数据持续化存入服务器
+	go userMessage.MessageTypeDispose()
 }

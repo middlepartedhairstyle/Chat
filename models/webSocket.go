@@ -69,7 +69,6 @@ func (ws *WebSocketClient) WriteMessage(messageType int, message []byte) error {
 // SendMessage 发送消息
 func (ws *WebSocketClient) SendMessage(fromId uint) {
 	var producers = make(map[string]*Kafka.Producer) //[topic]*Producer
-	var consumers = make(map[uint]uint)              //指定消息接收者[friendID/groupID]userID
 	for {
 		msg, ucm, err := ws.ReadMessage()
 		if err != nil {
@@ -80,55 +79,12 @@ func (ws *WebSocketClient) SendMessage(fromId uint) {
 			}
 			break
 		}
+		//查看消息类型格式是否正确
 		if ucm == nil {
 			fmt.Println(err)
 			continue
 		}
-		//消息正确性验证
-		info := ucm.GetInformation("fromID")
-		id := info["fromID"].(uint)
-		if id != fromId {
-			continue
-		}
-
-		var consumer uint //userID
-		var producer *Kafka.Producer
-		//指定消息接收者
-		info = ucm.GetInformation("toID")
-		toID := info["toID"].(uint)
-		if consumers[toID] != 0 {
-			consumer = consumers[toID]
-		} else {
-			//添加指定消息接收者
-			consumersID := ucm.SetConsumerID()
-			if consumersID == 0 {
-				fmt.Println("不存在该好友")
-				continue
-			}
-			consumers[toID] = consumersID
-			consumer = consumers[toID]
-		}
-
-		//查看是否有该topic,有就使用没有就新建
-		if producers[ucm.SetTopic(consumer)] != nil {
-			producer = producers[ucm.SetTopic(consumer)]
-		} else {
-			producer = Kafka.NewProducer(Kafka.SetProducerTopic(ucm.SetTopic(consumer)))
-			producers[ucm.SetTopic(consumer)] = producer
-		}
-
-		key := []byte(strconv.Itoa(int(consumer)))
-		err = producer.WriteData(&key, &msg)
-
-		//自己接收自己的信息,测试部分
-		key = []byte(strconv.Itoa(int(fromId)))
-		err = producer.WriteData(&key, &msg)
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		//将数据持续化存入服务器
-		go ucm.MessageDispose()
+		ucm.MessageDispose(producers, fromId, msg)
 	}
 
 }

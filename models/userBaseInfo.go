@@ -234,7 +234,37 @@ func (user *UserBaseInfo) FindGroup(groupInfo string) []mySQL.GroupNum {
 }
 
 // AddGroup 添加群聊
-func (user *UserBaseInfo) AddGroup() bool { return false }
+func (user *UserBaseInfo) AddGroup(groupID uint) interface{} {
+	group := mySQL.NewGroupNum(mySQL.SetGroupNumID(groupID))
+	switch group.IsVerify() {
+	//不需要验证
+	case 0:
+		groupUser := mySQL.NewGroupUser(mySQL.SetUserID(user.Id), mySQL.SetGroupID(groupID))
+		if groupUser.CreateGroupUser() {
+			return groupUser.FindAllGroupUser()
+		} else {
+			return nil
+		}
+	//需要验证
+	case 1:
+		group.GetGroupLeaderID()
+		groupRequest := mySQL.NewRequestAddGroup(mySQL.SetFromRequestID(user.Id), mySQL.SetToRequestID(group.GroupLeaderID), mySQL.SetAddGroupID(group.ID))
+		result := groupRequest.CreateRequestAddGroup()
+		if result != nil {
+
+			//在此处添加消息队列
+
+			return *result
+		} else {
+			return nil
+		}
+	default:
+		return false
+
+	}
+}
 
 // DisposeAddGroup 处理用户添加群聊，应使用冷热结合的方法，过久没有处理就存入数据库
-func (user *UserBaseInfo) DisposeAddGroup() bool { return false }
+func (user *UserBaseInfo) DisposeAddGroup() bool {
+
+	return false }

@@ -10,7 +10,7 @@ const (
 	FriendMessageT    string = "friend_message_tables"
 	FriendT           string = "friends_tables"
 	RequestAddFriendT string = "request_add_friend_tables"
-	RequestAddGroupT   string = "request_add_group_tables"
+	RequestAddGroupT  string = "request_add_group_tables"
 )
 
 // UserBaseInfoTable 用户基础信息(数据库)
@@ -64,7 +64,7 @@ type GroupNumTable struct {
 	GroupLeaderID uint              //群主id
 	GroupName     string            `gorm:"type:varchar(25)"` //群名
 	Visible       bool              `gorm:"type:tinyint(1)"`  //该群是否可以被搜索
-	Verify		  uint8             `gorm:"type:tinyint(1)"`  //添加该群是否需要群主同意,0需要,1不需要······
+	Verify        uint8             `gorm:"type:tinyint(1)"`  //添加该群是否需要群主同意,0需要,1不需要······
 }
 
 // GroupUserTable 用户群的用户(数据库)
@@ -76,7 +76,7 @@ type GroupUserTable struct {
 	UserID       uint              //用户id
 	Note         string            `gorm:"type:varchar(20)"` //用户给群的备注
 	Level        uint8             `gorm:"type:tinyint(1)"`  //用户在群中的等级
-	Relationship string            `gorm:"type:varchar(10)"` //用户在群中的关系如,群主,管理员,群员等
+	Relationship uint8             `gorm:"type:tinyint(1)"`  //用户在群中的关系如,1群主,2管理员,3群员等
 }
 
 // RequestAddFriendTable 存储请求添加好友的请求数据(数据库)
@@ -92,9 +92,11 @@ type RequestAddFriendTable struct {
 // RequestAddGroupTable 存储请求添加群的请求数据(数据库)
 type RequestAddGroupTable struct {
 	gorm.Model
-	GroupNum      GroupNumTable     `gorm:"foreignKey:FromRequestID;references:ID"`
-	UserBaseInfo  UserBaseInfoTable `gorm:"foreignKey:AddGroupID;references:ID"`
-	FromRequestID uint              `gorm:"type:int(11);not null;uniqueIndex:idx_group_request"`
-	AddGroupID    uint              `gorm:"type:int(11);not null;uniqueIndex:idx_group_request"`
-	State         uint8             `gorm:"type:tinyint(1)"` //是否同意为好友,1为同意为好友,2为待定未确认,3为拒接成为好友
+	GroupNum        GroupNumTable     `gorm:"foreignKey:FromRequestID;references:ID"`
+	UserBaseInfoOne UserBaseInfoTable `gorm:"foreignKey:AddGroupID;references:ID"`
+	UserBaseInfo    UserBaseInfoTable `gorm:"foreignKey:ToRequestID;references:ID"`
+	FromRequestID   uint              `gorm:"type:int(11);not null;uniqueIndex:idx_group_request"` //发送请求的用户id
+	ToRequestID     uint              `gorm:"type:int(11);not null;uniqueIndex:idx_group_request"` //接收请求的用户id
+	AddGroupID      uint              `gorm:"type:int(11);not null;uniqueIndex:idx_group_request"`
+	State           uint8             `gorm:"type:tinyint(1)"` //是否同意加群,1为同意,2为待定未确认,3为拒绝
 }

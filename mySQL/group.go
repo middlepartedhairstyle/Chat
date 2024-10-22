@@ -79,7 +79,7 @@ func (group *GroupNum) CreateGroup() bool {
 		}
 		//创建成功将信息同时存入group_user_tables
 		err = DB.Table(GroupNumT).Where("group_leader_id = ?", group.GroupLeaderID).First(&group).Error
-		groupUser := NewGroupUser(SetCreateAt(group.CreatedAt), SetUpdateAt(group.UpdatedAt), SetGroupID(group.ID), SetUserID(group.GroupLeaderID), SetRelationship(group.GroupName))
+		groupUser := NewGroupUser(SetCreateAt(group.CreatedAt), SetUpdateAt(group.UpdatedAt), SetGroupID(group.ID), SetUserID(group.GroupLeaderID), SetNote(group.GroupName), SetRelationship(1))
 		if groupUser.CreateGroupUser() {
 			return true
 		} else {
@@ -119,4 +119,22 @@ func (group *GroupNum) UseGroupNameFind() []GroupNum {
 		return nil
 	}
 	return groups
+}
+
+// IsVerify 检查加入群聊是否需要验证
+func (group *GroupNum) IsVerify() uint8 {
+	var verify uint8
+	err := DB.Table(GroupNumT).Where("id = ?", group.ID).Select("verify").Scan(&verify).Error
+	if err != nil {
+		return 127
+	}
+	return verify
+}
+
+// GetGroupLeaderID 获取群组id
+func (group *GroupNum) GetGroupLeaderID() {
+	err := DB.Table(GroupNumT).Where("id = ?", group.ID).Select("group_leader_id").Scan(&(group.GroupLeaderID)).Error
+	if err != nil {
+		return
+	}
 }

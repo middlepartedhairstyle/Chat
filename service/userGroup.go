@@ -48,6 +48,16 @@ func FindGroup(c *gin.Context) {
 
 // AddGroup 添加群聊
 func AddGroup(c *gin.Context) {
+	var user models.UserBaseInfo
+	groupIDString := c.Query("group_id")
+	user.Id, _ = utils.StringToUint(c.GetHeader("id"))
+	groupID, _ := utils.StringToUint(groupIDString)
+	result := user.AddGroup(groupID)
+	if result != nil {
+		utils.Success(c, "成功", result)
+	} else {
+		utils.Fail(c, "失败", -1)
+	}
 
 }
 
