@@ -1,15 +1,12 @@
 package models
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	Kafka "github.com/middlepartedhairstyle/HiWe/kafka"
-	"github.com/segmentio/kafka-go"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -69,6 +66,7 @@ func (ws *WebSocketClient) WriteMessage(messageType int, message []byte) error {
 // SendMessage 发送消息
 func (ws *WebSocketClient) SendMessage(fromId uint) {
 	var producers = make(map[string]*Kafka.Producer) //[topic]*Producer
+	var infoVerify = make(map[string]uint)           //例如[f1]2,[g]2
 	for {
 		msg, ucm, err := ws.ReadMessage()
 		if err != nil {
@@ -84,48 +82,16 @@ func (ws *WebSocketClient) SendMessage(fromId uint) {
 			fmt.Println(err)
 			continue
 		}
-		ucm.MessageDispose(producers, fromId, msg)
+		ucm.MessageDispose(producers, fromId, msg, infoVerify)
 	}
 
 }
 
 // GetMessage 获取消息
 func (ws *WebSocketClient) GetMessage(id uint) {
-	// 查找用户消息
-	go func(id uint) {
-		defer func() {
-			if r := recover(); r != nil {
-				fmt.Println("Recovering from panic in GetMessage:", r)
-			}
-		}()
 
-		var message []byte // 消息
-		var tpId = id/maxUserNum + 1
-		topic := fmt.Sprintf("%s%s%d", ChatWithFriend, "tp", tpId) // 例如 ftp1, ftp2
-		consumer := Kafka.NewConsumer(Kafka.SetConsumerTopic(topic), Kafka.SetConsumerGroupID(strconv.Itoa(int(id))))
-		defer func(consumer *kafka.Reader) {
-			err := consumer.Close()
-			if err != nil {
-
-			}
-		}(consumer) // 确保消费者关闭
-
-		for {
-			m, err := consumer.ReadMessage(context.Background())
-			if err != nil {
-				fmt.Println("Error reading message:", err)
-				continue
-			}
-			if string(m.Key) == strconv.Itoa(int(id)) {
-				message = m.Value
-				ws.messageList <- message
-			} else {
-				if err = consumer.CommitMessages(context.Background(), m); err != nil {
-					fmt.Printf("提交偏移量失败: %v\n", err)
-				}
-			}
-		}
-	}(id)
+	userChatMessage := NewUserChatMessage()
+	go userChatMessage.GetFriendMessage(id, ws)
 
 	// 消息写入 websocket
 	for {

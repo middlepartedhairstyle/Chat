@@ -136,3 +136,7 @@ func (groupUser *GroupUser) FindAllGroupUser() []GroupUserInfo {
 	}
 	return groupUsers
 }
+
+func (groupUser *GroupUser) GetGroupUserID() {
+
+}

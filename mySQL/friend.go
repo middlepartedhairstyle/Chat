@@ -11,6 +11,54 @@ type Friends struct {
 	NoteTwo      string `gorm:"type:varchar(20)"`                               //UserTwo个UserOne的备注
 }
 
+type FriendOpt func(*Friends)
+
+func SetFriendID(id uint) FriendOpt {
+	return func(friends *Friends) {
+		friends.ID = id
+	}
+}
+
+func SetUserOneID(userOneID uint) FriendOpt {
+	return func(friends *Friends) {
+		friends.UserOneID = userOneID
+	}
+}
+func SetUserTwoID(userTwoID uint) FriendOpt {
+	return func(friends *Friends) {
+		friends.UserTwoID = userTwoID
+	}
+}
+func SetFriendRelationship(relationship string) FriendOpt {
+	return func(friends *Friends) {
+		friends.Relationship = relationship
+	}
+}
+func SetNoteOne(noteOne string) FriendOpt {
+	return func(friends *Friends) {
+		friends.NoteOne = noteOne
+	}
+}
+func SetNoteTwo(noteTwo string) FriendOpt {
+	return func(friends *Friends) {
+		friends.NoteTwo = noteTwo
+	}
+}
+
+func NewFriend(opts ...FriendOpt) *Friends {
+	friends := &Friends{
+		UserOneID:    0,
+		UserTwoID:    0,
+		Relationship: "",
+		NoteOne:      "",
+		NoteTwo:      "",
+	}
+	for _, opt := range opts {
+		opt(friends)
+	}
+	return friends
+}
+
 // GetFriendList 获取好友列表
 func (friend *Friends) GetFriendList(userId uint) ([]Friends, bool) {
 	var friendList []Friends
@@ -50,9 +98,35 @@ func (friend *Friends) IsFriend() bool {
 	return count > 0
 }
 
+func (friend *Friends) IsFriendUseFriendID() (uint, bool) {
+	var count int64
+	var toFriendID uint
+	err := DB.Table(FriendT).Where("(id = ? AND user_two_id = ?) OR (user_one_id = ? AND id = ?)", friend.ID, friend.UserOneID, friend.UserOneID, friend.ID).Count(&count).Error
+	if err != nil {
+		return 0, false
+	}
+	if count > 0 {
+		err = DB.Table(FriendT).Where("(id = ? AND user_two_id = ?) OR (user_one_id = ? AND id = ?)", friend.ID, friend.UserOneID, friend.UserOneID, friend.ID).Select("user_one_id").Scan(&toFriendID).Error
+		if err != nil {
+			return 0, false
+		}
+		if toFriendID != friend.UserOneID {
+			return toFriendID, true
+		} else {
+			err = DB.Table(FriendT).Where("(id = ? AND user_two_id = ?) OR (user_one_id = ? AND id = ?)", friend.ID, friend.UserOneID, friend.UserOneID, friend.ID).Select("user_two_id").Scan(&toFriendID).Error
+			if err != nil {
+				return 0, false
+			}
+			return toFriendID, true
+		}
+	} else {
+		return 0, false
+	}
+}
+
 // FindTwoUserID 寻找两好友的id
 func (friend *Friends) FindTwoUserID() bool {
-	if err := DB.Table(FriendT).Where("id = ?",friend.ID).Select("user_one_id,user_two_id").Find(&friend).Error; err != nil {
+	if err := DB.Table(FriendT).Where("id = ?", friend.ID).Select("user_one_id,user_two_id").Find(&friend).Error; err != nil {
 		return false
 	}
 	return true

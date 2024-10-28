@@ -1,9 +1,11 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	Kafka "github.com/middlepartedhairstyle/HiWe/kafka"
 	"github.com/middlepartedhairstyle/HiWe/mySQL"
+	"github.com/segmentio/kafka-go"
 	"strconv"
 )
 
@@ -22,6 +24,7 @@ const (
 const (
 	ChatWithFriend = "f" //订阅消息者管道，后期更改为用户具体管道
 	ChatWithGroup  = "g"
+	ChatGroupUser  = "gu" //群用户具体通道
 )
 
 const maxUserNum = 100
@@ -29,7 +32,7 @@ const maxGroupNum = 50
 
 // UserChatMessage 用户消息
 type UserChatMessage struct {
-	FromID      uint   `json:"from_id"`      //用户ID
+	FromID      uint   `json:"from_id"`      //用户ID(好友),群用户ID(群)
 	ToID        uint   `json:"to_id"`        //好友ID,群ID,
 	MessageType uint8  `json:"message_type"` //消息类型,如图片,文字等
 	Media       uint8  `json:"media"`        //消息种类,如群消息和好友消息
@@ -38,7 +41,7 @@ type UserChatMessage struct {
 
 type Information interface {
 	SetTopic(topic uint) string
-	MessageDispose(producers map[string]*Kafka.Producer, fromID uint, message []byte)
+	MessageDispose(producers map[string]*Kafka.Producer, fromID uint, message []byte, args ...map[string]uint)
 	SetConsumerID() uint
 	GetInformation(opts ...string) map[string]interface{}
 }
@@ -108,24 +111,112 @@ func (userMessage *UserChatMessage) SetConsumerID() uint {
 }
 
 // MessageDispose 消息处理
-func (userMessage *UserChatMessage) MessageDispose(producers map[string]*Kafka.Producer, fromID uint, message []byte) {
+func (userMessage *UserChatMessage) MessageDispose(producers map[string]*Kafka.Producer, fromID uint, message []byte, args ...map[string]uint) {
+	var infoVerify map[string]uint
+	if len(args) > 0 {
+		infoVerify = args[0]
+	}
 	switch userMessage.Media {
 	case MediaFriend:
-		userMessage.IsFriendMessage(producers, fromID, message)
+		userMessage.IsFriendMessage(producers, fromID, message, infoVerify)
 	case MediaGroup:
+		userMessage.IsGroupMessage(producers, fromID, message, infoVerify)
 	default:
 		panic("unhandled default case")
 
 	}
 }
 
-// FriendMessageTypeDispose 消息处理
+// IsFriendMessage 消息类型为好友消息的处理方式
+func (userMessage *UserChatMessage) IsFriendMessage(producers map[string]*Kafka.Producer, fromID uint, message []byte, infoVerify map[string]uint) {
+	//消息正确性验证
+	if userMessage.FromID == fromID && userMessage.JudgeFriend(infoVerify) {
+		var producer *Kafka.Producer
+		toFriendID := infoVerify[ChatWithFriend+strconv.Itoa(int(userMessage.ToID))]
+		//查看是否有该topic,有就使用没有就新建
+		if producers[userMessage.SetTopic(toFriendID)] != nil {
+			producer = producers[userMessage.SetTopic(toFriendID)]
+		} else {
+			topic := userMessage.SetTopic(toFriendID)
+			producer = Kafka.NewProducer(Kafka.SetProducerTopic(topic))
+			if !producer.GetTopic(topic) {
+				if !producer.CreateTopicWithRetention(topic) {
+					return
+				}
+			}
+			producers[userMessage.SetTopic(toFriendID)] = producer
+		}
+
+		//fmt.Println(toFriendID)
+		key := []byte(ChatWithFriend + strconv.Itoa(int(toFriendID)))
+		err := producer.WriteData(&key, &message)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		//自己接收自己的信息,测试部分
+		if producers[userMessage.SetTopic(fromID)] != nil {
+			producer = producers[userMessage.SetTopic(fromID)]
+		} else {
+			topic := userMessage.SetTopic(fromID)
+			producer = Kafka.NewProducer(Kafka.SetProducerTopic(topic))
+			if !producer.GetTopic(topic) {
+				if !producer.CreateTopicWithRetention(topic) {
+					return
+				}
+			}
+			producers[userMessage.SetTopic(fromID)] = producer
+		}
+		key = []byte(ChatWithFriend + strconv.Itoa(int(fromID)))
+		err = producer.WriteData(&key, &message)
+		if err != nil {
+			return
+		}
+
+		//将数据持续化存入服务器
+		go userMessage.FriendMessageTypeDispose()
+	} else {
+		return
+	}
+
+}
+
+// IsGroupMessage 消息类型为群消息的处理方式
+func (userMessage *UserChatMessage) IsGroupMessage(producers map[string]*Kafka.Producer, fromID uint, message []byte, infoVerify map[string]uint) {
+	//消息来源正确性验证
+	if userMessage.FromID != fromID {
+		return
+	}
+	var producer *Kafka.Producer
+	if producers[userMessage.SetTopic(userMessage.ToID)] != nil {
+		producer = producers[userMessage.SetTopic(userMessage.ToID)]
+	} else {
+		topic := userMessage.SetTopic(userMessage.ToID)
+		producer = Kafka.NewProducer(Kafka.SetProducerTopic(topic))
+		if !producer.GetTopic(topic) {
+			if !producer.CreateTopicWithRetention(topic) {
+				return
+			}
+		}
+		producers[userMessage.SetTopic(userMessage.ToID)] = producer
+	}
+
+	key := []byte(ChatGroupUser + strconv.Itoa(int(userMessage.ToID)))
+	err := producer.WriteData(&key, &message)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	go userMessage.GroupMessageTypeDispose()
+}
+
+// FriendMessageTypeDispose 好友消息处理
 func (userMessage *UserChatMessage) FriendMessageTypeDispose() bool {
 
 	switch userMessage.MessageType {
 	//消息类型为文本
 	case MessageTypeText:
-		friendMessage := mySQL.NewFriendMessage(userMessage.ToID, userMessage.FromID, userMessage.MessageType, &(userMessage.Message))
+		friendMessage := mySQL.NewFriendMessage(userMessage.FromID, userMessage.ToID, userMessage.MessageType, &(userMessage.Message))
 		return friendMessage.CreateFriendMessage()
 	//消息类型为图片
 	case MessageTypeImage:
@@ -138,31 +229,79 @@ func (userMessage *UserChatMessage) FriendMessageTypeDispose() bool {
 	}
 }
 
-// IsFriendMessage 消息类型为好友消息的处理方式
-func (userMessage *UserChatMessage) IsFriendMessage(producers map[string]*Kafka.Producer, fromID uint, message []byte) {
-	//消息正确性验证
-	if userMessage.FromID != fromID {
-		return
+// GroupMessageTypeDispose 群消息处理
+func (userMessage *UserChatMessage) GroupMessageTypeDispose() bool {
+	switch userMessage.MessageType {
+	//消息类型为文本
+	case MessageTypeText:
+		groupMessage := mySQL.NewGroupMessage(userMessage.FromID, userMessage.ToID, userMessage.MessageType, &(userMessage.Message))
+		return groupMessage.CreateGroupMessage()
+	//消息类型为图片
+	case MessageTypeImage:
+		return true
+	//消息类型为语音
+	case MessageTypeVoice:
+		return true
+	default:
+		return false
 	}
-	var producer *Kafka.Producer
-	//查看是否有该topic,有就使用没有就新建
-	if producers[userMessage.SetTopic(userMessage.ToID)] != nil {
-		producer = producers[userMessage.SetTopic(userMessage.ToID)]
-	} else {
-		producer = Kafka.NewProducer(Kafka.SetProducerTopic(userMessage.SetTopic(userMessage.ToID)))
-		producers[userMessage.SetTopic(userMessage.ToID)] = producer
-	}
-
-	key := []byte(strconv.Itoa(int(userMessage.ToID)))
-	err := producer.WriteData(&key, &message)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	//自己接收自己的信息,测试部分
-	key = []byte(strconv.Itoa(int(fromID)))
-	err = producer.WriteData(&key, &message)
-
-	//将数据持续化存入服务器
-	go userMessage.FriendMessageTypeDispose()
 }
+
+// JudgeFriend 判断是否为好友
+func (userMessage *UserChatMessage) JudgeFriend(infoVerify map[string]uint) bool {
+
+	if infoVerify[ChatWithFriend+strconv.Itoa(int(userMessage.ToID))] != 0 {
+		return true
+	} else {
+		friend := mySQL.NewFriend(mySQL.SetFriendID(userMessage.ToID), mySQL.SetUserOneID(userMessage.FromID))
+		toFriendID, b := friend.IsFriendUseFriendID()
+		if b {
+			infoVerify[ChatWithFriend+strconv.Itoa(int(userMessage.ToID))] = toFriendID
+			return true
+		}
+		return false
+	}
+}
+
+// JudgeGroupUser 判断是否是群用户成员
+func (userMessage *UserChatMessage) JudgeGroupUser() {
+
+}
+
+// GetFriendMessage 获取好友发送的消息
+func (userMessage *UserChatMessage) GetFriendMessage(id uint, ws *WebSocketClient) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovering from panic in GetMessage:", r)
+		}
+	}()
+	var message []byte // 消息
+	var tpId = id/maxUserNum + 1
+	topic := fmt.Sprintf("%s%s%d", ChatWithFriend, "tp", tpId) // 例如 ftp1, ftp2
+	consumer := Kafka.NewConsumer(Kafka.SetConsumerTopic(topic), Kafka.SetConsumerGroupID(ChatWithFriend+strconv.Itoa(int(id))))
+	defer func(consumer *kafka.Reader) {
+		err := consumer.Close()
+		if err != nil {
+
+		}
+	}(consumer) // 确保消费者关闭
+
+	for {
+		m, err := consumer.ReadMessage(context.Background())
+		if err != nil {
+			fmt.Println("Error reading message:", err)
+			continue
+		}
+		if string(m.Key) == ChatWithFriend+strconv.Itoa(int(id)) {
+			message = m.Value
+			ws.messageList <- message
+		} else {
+			if err = consumer.CommitMessages(context.Background(), m); err != nil {
+				fmt.Printf("提交偏移量失败: %v\n", err)
+			}
+		}
+	}
+}
+
+// GetGroupMessage 获取群发送的消息
+func (userMessage *UserChatMessage) GetGroupMessage(id uint, ws *WebSocketClient) {}

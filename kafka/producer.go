@@ -43,6 +43,7 @@ func NewProducer(cfg ...SetProducerCfg) *Producer {
 	return producer
 }
 
+// WriteData 生产者写入数据
 func (producer *Producer) WriteData(key *[]byte, value *[]byte) error {
 	err := producer.Client.WriteMessages(context.Background(), kafka.Message{
 		Key:   *key,
@@ -54,8 +55,17 @@ func (producer *Producer) WriteData(key *[]byte, value *[]byte) error {
 	return err
 }
 
-// CreateTopicWithRetention 创建话题并设置过期时间
-func (producer *Producer) CreateTopicWithRetention(topic string, retention string, addr string) {
+// CreateTopicWithRetention 创建话题并设置过期时间,args[0]为过期时间,args[1]为addr(kafka服务地址)
+func (producer *Producer) CreateTopicWithRetention(topic string, args ...string) bool {
+	retention := "86400000"
+	addr := "23.95.15.178:9092"
+	if len(args) > 0 {
+		retention = args[0]
+	}
+	if len(args) > 1 {
+		addr = args[1]
+	}
+
 	conn, err := kafka.Dial("tcp", addr)
 	if err != nil {
 		panic(err.Error())
@@ -90,22 +100,33 @@ func (producer *Producer) CreateTopicWithRetention(topic string, retention strin
 
 	err = controllerConn.CreateTopics(topicConfigs...)
 	if err != nil {
-		panic(err.Error())
+		return false
 	}
+	return true
 }
 
-func (producer *Producer) GetTopic() {
-	conn, err := kafka.Dial("tcp", "23.95.15.178:9092")
+// GetTopic 获取kafka，topic是否存在
+func (producer *Producer) GetTopic(topic string, args ...string) bool {
+	addr := "23.95.15.178:9092"
+	for _, arg := range args {
+		addr = arg
+	}
+	conn, err := kafka.Dial("tcp", addr)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer conn.Close()
 
 	// 获取所有 topic
-	topics, err := conn.ReadPartitions("t")
+	topics, err := conn.ReadPartitions(topic)
+
+	if err != nil {
+		return false
+	}
 
 	// 打印所有 topic 的名称
-	for _, topic := range topics {
-		fmt.Println("Topic:", topic.Topic)
+	for _, t := range topics {
+		fmt.Println("Topic:", t.Topic)
 	}
+	return true
 }

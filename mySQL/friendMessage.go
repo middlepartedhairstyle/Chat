@@ -23,9 +23,17 @@ func NewFriendMessage(fromId uint, friendId uint, messageType uint8, message *st
 
 // CreateFriendMessage 将好友消息放入数据库中
 func (friendMessage *FriendMessage) CreateFriendMessage() bool {
-	err := DB.Table(FriendMessageT).Create(friendMessage).Error
+	var count int64
+	err := DB.Table(FriendT).Where("id=?", friendMessage.FriendID).Count(&count).Error
 	if err != nil {
 		return false
 	}
-	return true
+	if count > 0 {
+		err = DB.Table(FriendMessageT).Create(friendMessage).Error
+		if err != nil {
+			return false
+		}
+		return true
+	}
+	return false
 }

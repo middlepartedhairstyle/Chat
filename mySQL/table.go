@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 const (
 	UserBaseInfoT     string = "user_base_info_tables"
 	GroupNumT         string = "group_num_tables"
-	GroupMessageT     string = "group_messages_tables"
+	GroupMessageT     string = "group_message_tables"
 	GroupUserT        string = "group_user_tables"
 	FriendMessageT    string = "friend_message_tables"
 	FriendT           string = "friends_tables"
