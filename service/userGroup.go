@@ -61,6 +61,23 @@ func AddGroup(c *gin.Context) {
 
 }
 
+// GetRequestGroupList 获取用户加群请求列表
 func GetRequestGroupList(c *gin.Context) {}
-func RequestAddGroup(c *gin.Context)     {}
-func DisposeAddGroup(c *gin.Context)     {}
+
+// DisposeAddGroup 群主处理添加群的消息
+func DisposeAddGroup(c *gin.Context) {
+	var user models.UserBaseInfo
+	groupIDString := c.Query("request_id")
+	stateString := c.Query("state")
+	groupID, _ := utils.StringToUint(groupIDString)
+	state, _ := utils.StringToUint8(stateString)
+
+	user.Id, _ = utils.StringToUint(c.GetHeader("id"))
+
+	result, b := user.DisposeAddGroup(groupID, state)
+	if b {
+		utils.Success(c, "成功", result)
+	} else {
+		utils.Fail(c, "失败", result)
+	}
+}

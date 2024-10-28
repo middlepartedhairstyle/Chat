@@ -73,6 +73,7 @@ func (userMessage *UserChatMessage) SetTopic(topic uint) string {
 	case MediaFriend:
 		var tpId = topic/maxUserNum + 1
 		return fmt.Sprintf("%s%s%d", ChatWithFriend, "tp", tpId) //例如ftp1,ftp2
+		//return "test"
 	case MediaGroup:
 		var tpId = topic/maxGroupNum + 1
 		return fmt.Sprintf("%s%s%d", ChatWithGroup, "tp", tpId) //例如gtp1,gtp2
@@ -118,8 +119,8 @@ func (userMessage *UserChatMessage) MessageDispose(producers map[string]*Kafka.P
 	}
 }
 
-// MessageTypeDispose 消息处理
-func (userMessage *UserChatMessage) MessageTypeDispose() bool {
+// FriendMessageTypeDispose 消息处理
+func (userMessage *UserChatMessage) FriendMessageTypeDispose() bool {
 
 	switch userMessage.MessageType {
 	//消息类型为文本
@@ -137,6 +138,7 @@ func (userMessage *UserChatMessage) MessageTypeDispose() bool {
 	}
 }
 
+// IsFriendMessage 消息类型为好友消息的处理方式
 func (userMessage *UserChatMessage) IsFriendMessage(producers map[string]*Kafka.Producer, fromID uint, message []byte) {
 	//消息正确性验证
 	if userMessage.FromID != fromID {
@@ -162,5 +164,5 @@ func (userMessage *UserChatMessage) IsFriendMessage(producers map[string]*Kafka.
 	err = producer.WriteData(&key, &message)
 
 	//将数据持续化存入服务器
-	go userMessage.MessageTypeDispose()
+	go userMessage.FriendMessageTypeDispose()
 }

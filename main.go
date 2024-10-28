@@ -21,11 +21,8 @@ func main() {
 	gin.SetMode(gin.DebugMode)
 	logFile, _ := os.Create("./logs/gin.log")
 	gin.DefaultWriter = io.MultiWriter(logFile, os.Stdout)
-
 	router := gin.Default()
 	routers.Routers(router)
-
-	utils.GetTimeUnixNanoS()
 
 	err := router.Run(utils.Cfg.App.AppHost + ":" + utils.Cfg.App.AppPort)
 	if err != nil {

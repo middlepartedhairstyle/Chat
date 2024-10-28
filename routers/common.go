@@ -21,6 +21,7 @@ func Routers(router *gin.Engine) {
 	//用户群功能
 	router.POST("createGroup", middleware.RateLimiter("createGroup"), middleware.CheckToken, service.CreateGroup)
 	router.POST("addGroup", middleware.RateLimiter("addGroup"), middleware.CheckToken, service.AddGroup)
+	router.POST("disposeAddGroup", middleware.RateLimiter("disposeAddGroup"), middleware.CheckToken, service.DisposeAddGroup)
 	router.GET("findAllCreateGroup", middleware.RateLimiter("findAllCreateGroup"), middleware.CheckToken, service.GetCreateGroupList)
 	router.GET("findAllGroup", middleware.RateLimiter("findAllGroup"), middleware.CheckToken, service.GetAllGroupList)
 	router.GET("findGroup", middleware.RateLimiter("findGroup"), middleware.CheckToken, service.FindGroup)

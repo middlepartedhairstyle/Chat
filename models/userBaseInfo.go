@@ -265,6 +265,37 @@ func (user *UserBaseInfo) AddGroup(groupID uint) interface{} {
 }
 
 // DisposeAddGroup 处理用户添加群聊，应使用冷热结合的方法，过久没有处理就存入数据库
-func (user *UserBaseInfo) DisposeAddGroup() bool {
+func (user *UserBaseInfo) DisposeAddGroup(requestID uint, state uint8) (uint8, bool) {
+	request := mySQL.NewRequestAddGroup(mySQL.SetRequestAddGroupID(requestID), mySQL.SetState(state), mySQL.SetToRequestID(user.Id))
+	if request.ChickToUser() {
+		switch request.State {
+		case 1:
+			if request.ChangeState() {
+				//创建群用户，将被确认者加入群中
+				groupUser := mySQL.NewGroupUser(mySQL.SetUserID(request.FromRequestID), mySQL.SetGroupID(request.AddGroupID))
+				if groupUser.CreateGroupUser() {
+					//kafka,将创建的groupUser数据发给请求者
+					//将请求者加入该组的kafka，topic
 
-	return false }
+					return state, true
+				} else {
+					//失败将状态重新归为初始化
+					request.State = 2
+					request.ChangeState()
+					return state, false
+				}
+			}
+			return state, false
+		case 3:
+			if request.ChangeState() {
+				//kafka，发向确认者和被确认者
+				return state, true
+			}
+			return state, false
+		default:
+			return 2, false
+		}
+	} else {
+		return state, false
+	}
+}

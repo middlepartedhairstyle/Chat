@@ -1,6 +1,9 @@
 package mySQL
 
-import "gorm.io/gorm"
+import (
+	"fmt"
+	"gorm.io/gorm"
+)
 
 // RequestAddGroup 存储请求添加群的请求数据
 type RequestAddGroup struct {
@@ -12,6 +15,12 @@ type RequestAddGroup struct {
 }
 
 type RequestGroupOpt func(*RequestAddGroup)
+
+func SetRequestAddGroupID(requestAddGroupID uint) RequestGroupOpt {
+	return func(r *RequestAddGroup) {
+		r.ID = requestAddGroupID
+	}
+}
 
 func SetFromRequestID(fromRequestID uint) RequestGroupOpt {
 	return func(r *RequestAddGroup) {
@@ -60,6 +69,7 @@ func (request *RequestAddGroup) GetRequestAddGroupList() []RequestAddGroup {
 	return result
 }
 
+// CreateRequestAddGroup 创建用户加群需求
 func (request *RequestAddGroup) CreateRequestAddGroup() *RequestAddGroup {
 	var count int64
 	err := DB.Table(RequestAddGroupT).Where("from_request_id=? and to_request_id=? and add_group_id=?", request.FromRequestID, request.ToRequestID, request.AddGroupID).Count(&count).Error
@@ -76,6 +86,41 @@ func (request *RequestAddGroup) CreateRequestAddGroup() *RequestAddGroup {
 	return nil
 }
 
-func (request *RequestAddGroup) DisposeRequestAddGroup()  {
+// ChangeState 改变请求状态
+func (request *RequestAddGroup) ChangeState() bool {
+	var state uint8
+	var count int64
+	err := DB.Table(RequestAddGroupT).Where("id=?", request.ID).Count(&count).Error
+	if err != nil {
+		return false
+	}
+	if count > 0 {
+		err = DB.Table(RequestAddGroupT).Where("id=?", request.ID).Select("state").Scan(&state).Error
+		if err != nil {
+			return false
+		}
+		if state == 2 {
+			err = DB.Table(RequestAddGroupT).Where("id=?", request.ID).Update("state", request.State).Error
+			if err != nil {
+				return false
+			}
+			err = DB.Table(RequestAddGroupT).Where("id=?", request.ID).Find(request).Error
+			return true
+		}
+		fmt.Println(state)
+		return false
+	}
+	return false
+}
 
+func (request *RequestAddGroup) ChickToUser() bool {
+	var count int64
+	err := DB.Table(RequestAddGroupT).Where("id=? and to_request_id=?", request.ID, request.ToRequestID).Count(&count).Error
+	if err != nil {
+		return false
+	}
+	if count > 0 {
+		return true
+	}
+	return false
 }
