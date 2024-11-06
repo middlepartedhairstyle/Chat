@@ -241,7 +241,7 @@ func (user *UserBaseInfo) AddGroup(groupID uint) interface{} {
 	case 0:
 		groupUser := mySQL.NewGroupUser(mySQL.SetUserID(user.Id), mySQL.SetGroupID(groupID))
 		if groupUser.CreateGroupUser() {
-			return groupUser.FindAllGroupUser()
+			return *groupUser
 		} else {
 			return nil
 		}
@@ -276,7 +276,15 @@ func (user *UserBaseInfo) DisposeAddGroup(requestID uint, state uint8) (uint8, b
 				if groupUser.CreateGroupUser() {
 					//kafka,将创建的groupUser数据发给请求者
 					//将请求者加入该组的kafka，topic
-
+					userMessageBase := NewUserMessageBase(SetUserMessageTypes(2), SetBaseMessage(groupUser))
+					info := NewInfo()
+					err := info.WriteKafka(userMessageBase, userMessageBase.SetTopic(groupUser.UserID), groupUser.UserID)
+					if err != nil {
+						//失败将状态重新归为初始化
+						request.State = 2
+						request.ChangeState()
+						return state, false
+					}
 					return state, true
 				} else {
 					//失败将状态重新归为初始化
@@ -288,7 +296,8 @@ func (user *UserBaseInfo) DisposeAddGroup(requestID uint, state uint8) (uint8, b
 			return state, false
 		case 3:
 			if request.ChangeState() {
-				//kafka，发向确认者和被确认者
+				//kafka，被确认者
+
 				return state, true
 			}
 			return state, false

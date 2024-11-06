@@ -89,9 +89,12 @@ func (ws *WebSocketClient) SendMessage(fromId uint) {
 
 // GetMessage 获取消息
 func (ws *WebSocketClient) GetMessage(id uint) {
-
+	//从kafka中读取新消息
 	userChatMessage := NewUserChatMessage()
+	info := NewInfo()
 	go userChatMessage.GetFriendMessage(id, ws)
+	go userChatMessage.GetGroupMessage(id, ws)
+	go info.ReadKafka(id, ws)
 
 	// 消息写入 websocket
 	for {

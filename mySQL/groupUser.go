@@ -126,6 +126,26 @@ func (groupUser *GroupUser) FindAllGroup() []GroupUser {
 	return groupUsers
 }
 
+// FindAllGroupID 寻找用户所有群聊包括创建的和加入的群聊
+func (groupUser *GroupUser) FindAllGroupID() []uint {
+	var groupIDs []uint
+	err := DB.Table(GroupUserT).Where("user_id = ?", groupUser.UserID).Select("group_id").Scan(&groupIDs).Error
+	if err != nil {
+		return nil
+	}
+	return groupIDs
+}
+
+// FindGroupUserID 寻找用户所有群聊用户ID
+func (groupUser *GroupUser) FindGroupUserID() []uint {
+	var groupUserIDs []uint
+	err := DB.Table(GroupUserT).Where("user_id = ?", groupUser.UserID).Select("id").Scan(&groupUserIDs).Error
+	if err != nil {
+		return nil
+	}
+	return groupUserIDs
+}
+
 // FindAllGroupUser 寻找用户加入群聊的所有成员
 func (groupUser *GroupUser) FindAllGroupUser() []GroupUserInfo {
 
@@ -137,6 +157,19 @@ func (groupUser *GroupUser) FindAllGroupUser() []GroupUserInfo {
 	return groupUsers
 }
 
-func (groupUser *GroupUser) GetGroupUserID() {
-
+// IsGroupUserGetID 判断是否为群用户并返回群用户id(groupUserID)
+func (groupUser *GroupUser) IsGroupUserGetID() bool {
+	var count int64
+	err := DB.Table(GroupUserT).Where("group_id=? and user_id=?", groupUser.GroupID, groupUser.UserID).Count(&count).Error
+	if err != nil {
+		return false
+	}
+	if count > 0 {
+		err = DB.Table(GroupUserT).Where("group_id=? and user_id=?", groupUser.GroupID, groupUser.UserID).Select("id").Scan(&groupUser.ID).Error
+		if err != nil {
+			return false
+		}
+		return true
+	}
+	return false
 }

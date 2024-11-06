@@ -27,7 +27,7 @@ const (
 	ChatGroupUser  = "gu" //群用户具体通道
 )
 
-const maxUserNum = 100
+const maxFriendNum = 100
 const maxGroupNum = 50
 
 // UserChatMessage 用户消息
@@ -40,31 +40,31 @@ type UserChatMessage struct {
 }
 
 type Information interface {
-	SetTopic(topic uint) string
 	MessageDispose(producers map[string]*Kafka.Producer, fromID uint, message []byte, args ...map[string]uint)
-	SetConsumerID() uint
-	GetInformation(opts ...string) map[string]interface{}
+	//SetConsumerID() uint
+	//GetInformation(opts ...string) map[string]interface{}
+	//SetTopic(topic uint) string
 }
 
-// GetInformation 获取消息信息
-func (userMessage *UserChatMessage) GetInformation(opts ...string) map[string]interface{} {
-	var info map[string]interface{} = make(map[string]interface{})
-	for _, opt := range opts {
-		switch opt {
-		case "fromID":
-			info["fromID"] = userMessage.FromID
-		case "toID":
-			info["toID"] = userMessage.ToID
-		case "messageType":
-			info["messageType"] = userMessage.MessageType
-		case "media":
-			info["media"] = userMessage.Media
-		case "message":
-			info["message"] = userMessage.Message
-		}
-	}
-	return info
-}
+//// GetInformation 获取消息信息
+//func (userMessage *UserChatMessage) GetInformation(opts ...string) map[string]interface{} {
+//	var info map[string]interface{} = make(map[string]interface{})
+//	for _, opt := range opts {
+//		switch opt {
+//		case "fromID":
+//			info["fromID"] = userMessage.FromID
+//		case "toID":
+//			info["toID"] = userMessage.ToID
+//		case "messageType":
+//			info["messageType"] = userMessage.MessageType
+//		case "media":
+//			info["media"] = userMessage.Media
+//		case "message":
+//			info["message"] = userMessage.Message
+//		}
+//	}
+//	return info
+//}
 
 func NewUserChatMessage() *UserChatMessage {
 	return &UserChatMessage{}
@@ -74,7 +74,7 @@ func NewUserChatMessage() *UserChatMessage {
 func (userMessage *UserChatMessage) SetTopic(topic uint) string {
 	switch userMessage.Media {
 	case MediaFriend:
-		var tpId = topic/maxUserNum + 1
+		var tpId = topic/maxFriendNum + 1
 		return fmt.Sprintf("%s%s%d", ChatWithFriend, "tp", tpId) //例如ftp1,ftp2
 		//return "test"
 	case MediaGroup:
@@ -184,30 +184,30 @@ func (userMessage *UserChatMessage) IsFriendMessage(producers map[string]*Kafka.
 // IsGroupMessage 消息类型为群消息的处理方式
 func (userMessage *UserChatMessage) IsGroupMessage(producers map[string]*Kafka.Producer, fromID uint, message []byte, infoVerify map[string]uint) {
 	//消息来源正确性验证
-	if userMessage.FromID != fromID {
+	if userMessage.FromID == fromID && userMessage.JudgeGroupUser(infoVerify) {
+		var producer *Kafka.Producer
+		if producers[userMessage.SetTopic(userMessage.ToID)] != nil {
+			producer = producers[userMessage.SetTopic(userMessage.ToID)]
+		} else {
+			topic := userMessage.SetTopic(userMessage.ToID)
+			producer = Kafka.NewProducer(Kafka.SetProducerTopic(topic))
+			if !producer.GetTopic(topic) {
+				if !producer.CreateTopicWithRetention(topic) {
+					return
+				}
+			}
+			producers[userMessage.SetTopic(userMessage.ToID)] = producer
+		}
+		key := []byte(ChatWithGroup + strconv.Itoa(int(userMessage.ToID))) //g5,g1
+		err := producer.WriteData(&key, &message)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		go userMessage.GroupMessageTypeDispose()
+	} else {
 		return
 	}
-	var producer *Kafka.Producer
-	if producers[userMessage.SetTopic(userMessage.ToID)] != nil {
-		producer = producers[userMessage.SetTopic(userMessage.ToID)]
-	} else {
-		topic := userMessage.SetTopic(userMessage.ToID)
-		producer = Kafka.NewProducer(Kafka.SetProducerTopic(topic))
-		if !producer.GetTopic(topic) {
-			if !producer.CreateTopicWithRetention(topic) {
-				return
-			}
-		}
-		producers[userMessage.SetTopic(userMessage.ToID)] = producer
-	}
-
-	key := []byte(ChatGroupUser + strconv.Itoa(int(userMessage.ToID)))
-	err := producer.WriteData(&key, &message)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	go userMessage.GroupMessageTypeDispose()
 }
 
 // FriendMessageTypeDispose 好友消息处理
@@ -264,8 +264,17 @@ func (userMessage *UserChatMessage) JudgeFriend(infoVerify map[string]uint) bool
 }
 
 // JudgeGroupUser 判断是否是群用户成员
-func (userMessage *UserChatMessage) JudgeGroupUser() {
-
+func (userMessage *UserChatMessage) JudgeGroupUser(infoVerify map[string]uint) bool {
+	if infoVerify[ChatWithGroup+strconv.Itoa(int(userMessage.ToID))] != 0 {
+		return true
+	} else {
+		groupUser := mySQL.NewGroupUser(mySQL.SetUserID(userMessage.FromID), mySQL.SetGroupID(userMessage.ToID))
+		if groupUser.IsGroupUserGetID() {
+			infoVerify[ChatWithGroup+strconv.Itoa(int(userMessage.ToID))] = groupUser.UserID
+			return true
+		}
+		return false
+	}
 }
 
 // GetFriendMessage 获取好友发送的消息
@@ -276,7 +285,7 @@ func (userMessage *UserChatMessage) GetFriendMessage(id uint, ws *WebSocketClien
 		}
 	}()
 	var message []byte // 消息
-	var tpId = id/maxUserNum + 1
+	var tpId = id/maxFriendNum + 1
 	topic := fmt.Sprintf("%s%s%d", ChatWithFriend, "tp", tpId) // 例如 ftp1, ftp2
 	consumer := Kafka.NewConsumer(Kafka.SetConsumerTopic(topic), Kafka.SetConsumerGroupID(ChatWithFriend+strconv.Itoa(int(id))))
 	defer func(consumer *kafka.Reader) {
@@ -304,4 +313,49 @@ func (userMessage *UserChatMessage) GetFriendMessage(id uint, ws *WebSocketClien
 }
 
 // GetGroupMessage 获取群发送的消息
-func (userMessage *UserChatMessage) GetGroupMessage(id uint, ws *WebSocketClient) {}
+func (userMessage *UserChatMessage) GetGroupMessage(id uint, ws *WebSocketClient) {
+	//已存在于数据库之中的好友用户
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovering from panic in GetMessage:", r)
+		}
+	}()
+	var message []byte // 消息
+	var topics = make(map[uint]string)
+	groupUser := mySQL.NewGroupUser(mySQL.SetUserID(id))
+	groups := groupUser.FindAllGroupID()
+	//寻找topic，同时去重
+	for _, group := range groups {
+		var tpId = group/maxGroupNum + 1
+		topics[tpId] = fmt.Sprintf("%s%s%d", ChatWithGroup, "tp", tpId) // 例如 gtp1, gtp2
+	}
+
+	for _, topic := range topics {
+		go func(topic string, groupUserID []uint) {
+			consumer := Kafka.NewConsumer(Kafka.SetConsumerTopic(topic), Kafka.SetConsumerGroupID(topic+ChatGroupUser+strconv.Itoa(int(id)))) //gtp1gu1,gtp2gu1
+			defer func(consumer *kafka.Reader) {
+				err := consumer.Close()
+				if err != nil {
+				}
+			}(consumer) // 确保消费者关闭
+			for {
+				m, err := consumer.ReadMessage(context.Background())
+				if err != nil {
+					fmt.Println("Error reading message:", err)
+					continue
+				}
+				var gKey = string(m.Key)
+				for _, key := range groups {
+					if gKey == ChatWithGroup+strconv.Itoa(int(key)) {
+						message = m.Value
+						ws.messageList <- message
+					} else {
+						if err = consumer.CommitMessages(context.Background(), m); err != nil {
+							fmt.Printf("提交偏移量失败: %v\n", err)
+						}
+					}
+				}
+			}
+		}(topic, groups)
+	}
+}
