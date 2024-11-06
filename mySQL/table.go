@@ -3,88 +3,68 @@ package mySQL
 import "gorm.io/gorm"
 
 const (
-	GROUPNUMTABLE     string = "group_num_tables"
-	GROUPMESSAGETABLE string = "group_messages_tables"
-	GROUPUSERTABLE    string = "group_user_tables"
-	USERBASETABLE     string = "user_base_info_tables"
-	USERMESSAGETABLE  string = "user_messages_tables"
-	USERFRIENDSTABLE  string = "user_friends_tables"
-	REQUESTADDFRIENDTABLE  string = "request_add_friends"
-)
-
-const (
-	Id            string = "id"
-	CreatedAt            = "created_at"
-	UpdatedAt            = "updated_at"
-	DeletedAt            = "deleted_at"
-	Email                = "email"
-	Username             = "username"
-	Password             = "password"
-	Md5num               = "md5_num"
-	Token                = "token"
-	FromId               = "from_id"
-	ToId                 = "to_id"
-	MessageType          = "message_type"
-	Media                = "media"
-	Content              = "content"
-	UserId               = "user_id"
-	FriendId             = "friend_id"
-	GroupId              = "group_id"
-	Level                = "level"
-	GroupName            = "group_name"
-	GroupLeaderId        = "group_leader_id"
-	ToGroupId            = "to_group_id"
+	UserBaseInfoT     string = "user_base_info_tables"
+	GroupNumT         string = "group_num_tables"
+	GroupMessageT     string = "group_message_tables"
+	GroupUserT        string = "group_user_tables"
+	FriendMessageT    string = "friend_message_tables"
+	FriendT           string = "friends_tables"
+	RequestAddFriendT string = "request_add_friend_tables"
+	RequestAddGroupT  string = "request_add_group_tables"
 )
 
 // UserBaseInfoTable 用户基础信息(数据库)
 type UserBaseInfoTable struct {
 	gorm.Model
 	Email    string `gorm:"type:varchar(127);not null;unique:email"`
-	Username string `gorm:"type:varchar(20)"`
-	Password string `gorm:"type:varchar(32)"`
-	Md5Num   string `gorm:"type:varchar(6)"`
-	Token    string `gorm:"type:varchar(32)"`
+	Username string `gorm:"type:varchar(20)"` //用户名
+	Password string `gorm:"type:varchar(64)"` //加密后的密码
+	Sale     string `gorm:"type:varchar(6)"`  //加密密钥
+	Token    string `gorm:"type:varchar(64)"`
 }
 
-// UserFriendsTable 用户好友表(数据库)
-type UserFriendsTable struct {
+// FriendsTable 用户好友表(数据库)
+type FriendsTable struct {
 	gorm.Model
-	UserBaseInfoOne UserBaseInfoTable `gorm:"foreignKey:UserID;references:ID"`
-	UserBaseInfo    UserBaseInfoTable `gorm:"foreignKey:FriendID;references:ID"`
-	UserID          uint64            `gorm:"type:int(11);not null;uniqueIndex:idx_user_friend"`
-	FriendID        uint64            `gorm:"type:int(11);not null;uniqueIndex:idx_user_friend"`
+	UserBaseInfoOne UserBaseInfoTable `gorm:"foreignKey:UserOneID;references:ID"`
+	UserBaseInfo    UserBaseInfoTable `gorm:"foreignKey:UserTwoID;references:ID"`
+	UserOneID       uint              `gorm:"type:int(11);not null;index:idx_friends,unique"` //用户一id
+	UserTwoID       uint              `gorm:"type:int(11);not null;index:idx_friends,unique"` //用户二id
+	Relationship    string            `gorm:"type:varchar(10)"`                               //两者关系
+	NoteOne         string            `gorm:"type:varchar(20)"`                               //UserOne个UserTwo的备注
+	NoteTwo         string            `gorm:"type:varchar(20)"`                               //UserTwo个UserOne的备注
 }
 
-// UserMessageTable 用户消息(数据库)
-type UserMessageTable struct {
+// FriendMessageTable 用户消息(数据库)
+type FriendMessageTable struct {
 	gorm.Model
 	UserBaseInfoOne UserBaseInfoTable `gorm:"foreignKey:FromID;references:ID"`
-	UserBaseInfo    UserBaseInfoTable `gorm:"foreignKey:ToID;references:ID"`
-	FromID          uint64
-	ToID            uint64
-	MessageType     uint8  `gorm:"type:tinyint(1)"`
-	Media           uint8  `gorm:"type:tinyint(1)"`
-	Content         string `gorm:"type:text"`
+	UserBaseInfo    UserBaseInfoTable `gorm:"foreignKey:FriendID;references:ID"`
+	FromID          uint              //发送者id
+	FriendID        uint              //好友组队id
+	MessageType     uint8             `gorm:"type:tinyint(1)"` //消息类型
+	Message         string            `gorm:"type:text"`       //消息主体
 }
 
 // GroupMessageTable 群消息(数据库)
 type GroupMessageTable struct {
 	gorm.Model
 	UserBaseInfo UserBaseInfoTable `gorm:"foreignKey:FromID;references:ID"`
-	GroupNum     GroupNumTable     `gorm:"foreignKey:ToGroupID;references:ID"`
-	FromID       uint64
-	ToGroupID    uint64
-	MessageType  uint8  `gorm:"type:tinyint(1)"`
-	Media        uint8  `gorm:"type:tinyint(1)"`
-	Content      string `gorm:"type:text"`
+	GroupNum     GroupNumTable     `gorm:"foreignKey:GroupID;references:ID"`
+	FromID       uint              //发送信息用户id
+	GroupID      uint              //群id
+	MessageType  uint8             `gorm:"type:tinyint(1)"` //消息类型，文本图片
+	Message      string            `gorm:"type:text"`       //消息主体
 }
 
 // GroupNumTable 用户群(数据库)
 type GroupNumTable struct {
 	gorm.Model
 	UserBaseInfo  UserBaseInfoTable `gorm:"foreignKey:GroupLeaderID;references:ID"`
-	GroupLeaderID uint64
-	GroupName     string `gorm:"type:varchar(25)"`
+	GroupLeaderID uint              //群主id
+	GroupName     string            `gorm:"type:varchar(25)"` //群名
+	Visible       bool              `gorm:"type:tinyint(1)"`  //该群是否可以被搜索
+	Verify        uint8             `gorm:"type:tinyint(1)"`  //添加该群是否需要群主同意,0需要,1不需要······
 }
 
 // GroupUserTable 用户群的用户(数据库)
@@ -92,17 +72,31 @@ type GroupUserTable struct {
 	gorm.Model
 	GroupNum     GroupNumTable     `gorm:"foreignKey:GroupID;references:ID"`
 	UserBaseInfo UserBaseInfoTable `gorm:"foreignKey:UserID;references:ID"`
-	GroupID      uint64
-	UserID       uint64
-	Level        uint8 `gorm:"type:tinyint(1)"`
+	GroupID      uint              //群组id
+	UserID       uint              //用户id
+	Note         string            `gorm:"type:varchar(20)"` //用户给群的备注
+	Level        uint8             `gorm:"type:tinyint(1)"`  //用户在群中的等级
+	Relationship uint8             `gorm:"type:tinyint(1)"`  //用户在群中的关系如,1群主,2管理员,3群员等
 }
 
-// RequestAddFriend 存储请求添加好友的请求数据(数据库)
-type RequestAddFriend struct {
+// RequestAddFriendTable 存储请求添加好友的请求数据(数据库)
+type RequestAddFriendTable struct {
 	gorm.Model
 	UserBaseInfoOne UserBaseInfoTable `gorm:"foreignKey:FromRequestID;references:ID"`
 	UserBaseInfo    UserBaseInfoTable `gorm:"foreignKey:ToRequestID;references:ID"`
-	FromRequestID   uint64            `gorm:"type:int(11);not null;uniqueIndex:idx_friend_request"`
-	ToRequestID     uint64            `gorm:"type:int(11);not null;uniqueIndex:idx_friend_request"`
-	State           bool              `gorm:"type:tinyint(1)"` //是否同意为好友
+	FromRequestID   uint              `gorm:"type:int(11);not null;uniqueIndex:idx_friend_request"` //发送好友请求的用户id
+	ToRequestID     uint              `gorm:"type:int(11);not null;uniqueIndex:idx_friend_request"` //接收好友请求的用户id
+	State           uint8             `gorm:"type:tinyint(1)"`                                      //是否同意为好友,1为同意为好友,2为待定未确认,3为拒接成为好友
+}
+
+// RequestAddGroupTable 存储请求添加群的请求数据(数据库)
+type RequestAddGroupTable struct {
+	gorm.Model
+	GroupNum        GroupNumTable     `gorm:"foreignKey:FromRequestID;references:ID"`
+	UserBaseInfoOne UserBaseInfoTable `gorm:"foreignKey:AddGroupID;references:ID"`
+	UserBaseInfo    UserBaseInfoTable `gorm:"foreignKey:ToRequestID;references:ID"`
+	FromRequestID   uint              `gorm:"type:int(11);not null;uniqueIndex:idx_group_request"` //发送请求的用户id
+	ToRequestID     uint              `gorm:"type:int(11);not null;uniqueIndex:idx_group_request"` //接收请求的用户id
+	AddGroupID      uint              `gorm:"type:int(11);not null;uniqueIndex:idx_group_request"`
+	State           uint8             `gorm:"type:tinyint(1)"` //是否同意加群,1为同意,2为待定未确认,3为拒绝
 }
