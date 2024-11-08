@@ -172,6 +172,12 @@ func (user *UserBaseInfo) DisposeAddFriend(f mySQL.Friends, requestId uint, stat
 					r.SetState(state)
 
 					//(后期添加消息队列，实时了解)
+					userMessageBase := NewUserMessageBase(SetUserMessageTypes(1), SetBaseMessage(map[string]uint8{"state": state}))
+					info := NewInfo()
+					err := info.WriteKafka(userMessageBase, userMessageBase.SetTopic(r.FromRequestID), r.FromRequestID)
+					if err != nil {
+						return true, r.State
+					}
 
 					r.GetState()
 					return true, r.State
@@ -183,6 +189,12 @@ func (user *UserBaseInfo) DisposeAddFriend(f mySQL.Friends, requestId uint, stat
 			r.SetState(state)
 
 			//(后期添加消息队列，实时了解)
+			userMessageBase := NewUserMessageBase(SetUserMessageTypes(1), SetBaseMessage(map[string]uint8{"state": state}))
+			info := NewInfo()
+			err := info.WriteKafka(userMessageBase, userMessageBase.SetTopic(r.FromRequestID), r.FromRequestID)
+			if err != nil {
+				return true, r.State
+			}
 
 			r.GetState()
 			return true, r.State
@@ -220,7 +232,7 @@ func (user *UserBaseInfo) FindAllGroup() []mySQL.GroupUser {
 	return groupUser.FindAllGroup()
 }
 
-// FindGroup 使用群id寻找群
+// FindGroup 使用群id或群名寻找群
 func (user *UserBaseInfo) FindGroup(groupInfo string) []mySQL.GroupNum {
 	info, err := utils.StringToUint(groupInfo)
 	switch err {
@@ -233,7 +245,7 @@ func (user *UserBaseInfo) FindGroup(groupInfo string) []mySQL.GroupNum {
 	}
 }
 
-// AddGroup 添加群聊
+// AddGroup 添加群聊(待完善)
 func (user *UserBaseInfo) AddGroup(groupID uint) interface{} {
 	group := mySQL.NewGroupNum(mySQL.SetGroupNumID(groupID))
 	switch group.IsVerify() {
@@ -241,6 +253,8 @@ func (user *UserBaseInfo) AddGroup(groupID uint) interface{} {
 	case 0:
 		groupUser := mySQL.NewGroupUser(mySQL.SetUserID(user.Id), mySQL.SetGroupID(groupID))
 		if groupUser.CreateGroupUser() {
+			//添加消息队列，发送到对应的群topic中，key设置为gtp(groupID/max)
+
 			return *groupUser
 		} else {
 			return nil
@@ -251,16 +265,19 @@ func (user *UserBaseInfo) AddGroup(groupID uint) interface{} {
 		groupRequest := mySQL.NewRequestAddGroup(mySQL.SetFromRequestID(user.Id), mySQL.SetToRequestID(group.GroupLeaderID), mySQL.SetAddGroupID(group.ID))
 		result := groupRequest.CreateRequestAddGroup()
 		if result != nil {
-
 			//在此处添加消息队列
-
+			userMessageBase := NewUserMessageBase(SetUserMessageTypes(2), SetBaseMessage(result))
+			info := NewInfo()
+			err := info.WriteKafka(userMessageBase, userMessageBase.SetTopic(result.ToRequestID), result.ToRequestID)
+			if err != nil {
+				return nil
+			}
 			return *result
 		} else {
 			return nil
 		}
 	default:
 		return false
-
 	}
 }
 
@@ -297,7 +314,15 @@ func (user *UserBaseInfo) DisposeAddGroup(requestID uint, state uint8) (uint8, b
 		case 3:
 			if request.ChangeState() {
 				//kafka，被确认者
-
+				userMessageBase := NewUserMessageBase(SetUserMessageTypes(2), SetBaseMessage(map[string]uint{"拒绝": 3}))
+				info := NewInfo()
+				err := info.WriteKafka(userMessageBase, userMessageBase.SetTopic(request.FromRequestID), request.FromRequestID)
+				if err != nil {
+					//失败将状态重新归为初始化
+					request.State = 2
+					request.ChangeState()
+					return state, false
+				}
 				return state, true
 			}
 			return state, false
