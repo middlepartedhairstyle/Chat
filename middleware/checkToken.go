@@ -6,6 +6,11 @@ import (
 	"github.com/middlepartedhairstyle/HiWe/utils"
 )
 
+const (
+	TokenNotUseful = 40001 //token无效
+	ServerError    = 40004 //服务器错误
+)
+
 // CheckToken 核对用户token
 func CheckToken(c *gin.Context) {
 	var user models.UserBaseInfo
@@ -14,7 +19,7 @@ func CheckToken(c *gin.Context) {
 	if user.CheckToken() {
 		c.Next()
 	} else {
-		utils.Fail(c, "token无效", gin.H{
+		utils.Fail(c, TokenNotUseful, gin.H{
 			"id": user.Id,
 		})
 		c.Abort()

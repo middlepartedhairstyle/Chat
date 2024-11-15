@@ -7,6 +7,11 @@ import (
 	"github.com/middlepartedhairstyle/HiWe/utils"
 )
 
+const (
+	AlreadyFriend        = 21101 //已经是好友
+	DisposeAddFriendFail = 21102 //处理好友请求失败
+)
+
 // GetFriendList 获取好友列表
 func GetFriendList(c *gin.Context) {
 	var user models.UserBaseInfo
@@ -15,7 +20,7 @@ func GetFriendList(c *gin.Context) {
 	//查询用户好友列表
 	var friendList []mySQL.Friends //存放列表数据
 	friendList, _ = user.GetFriendList()
-	utils.Success(c, "成功", friendList)
+	utils.Success(c, SUCCESS, friendList)
 }
 
 // GetRequestFriendList 获取好友请求添加列表(用于首次登录)
@@ -26,13 +31,17 @@ func GetRequestFriendList(c *gin.Context) {
 	user.Id, _ = utils.StringToUint(c.Query("id"))
 	friendList, b = user.GetRequestFriendList()
 	if b {
-		utils.Success(c, "成功", friendList)
+		utils.Success(c, SUCCESS, gin.H{
+			"friend_list": friendList,
+		})
 	} else {
-		utils.Fail(c, "失败", friendList)
+		utils.Fail(c, ServerError, gin.H{
+			"friend_list": friendList,
+		})
 	}
 }
 
-// RequestAddFriend 添加好友
+// RequestAddFriend 请求添加好友
 func RequestAddFriend(c *gin.Context) {
 	var user models.UserBaseInfo
 	var fromId uint
@@ -42,12 +51,12 @@ func RequestAddFriend(c *gin.Context) {
 	user.Id = fromId
 	err := user.RequestAddFriend(fromId, toId)
 	if err {
-		utils.Success(c, "成功", gin.H{
+		utils.Success(c, SUCCESS, gin.H{
 			"from_id": fromId,
 			"to_id":   toId,
 		})
 	} else {
-		utils.Fail(c, "失败", gin.H{
+		utils.Fail(c, AlreadyFriend, gin.H{
 			"from_id": fromId,
 			"to_id":   toId,
 		})
@@ -68,15 +77,16 @@ func DisposeAddFriend(c *gin.Context) {
 
 	b, s := user.DisposeAddFriend(friend, requestId, state)
 	if b {
-		utils.Success(c, "成功", gin.H{
+		utils.Success(c, SUCCESS, gin.H{
 			"state":   s,
 			"from_id": friend.UserOneID,
 			"to_id":   friend.UserTwoID,
 		})
 	} else {
-		utils.Fail(c, "失败", gin.H{
-			"state": s,
-			"id":    friend.UserTwoID,
+		utils.Fail(c, DisposeAddFriendFail, gin.H{
+			"state":   s,
+			"from_id": friend.UserOneID,
+			"to_id":   friend.UserTwoID,
 		})
 	}
 }

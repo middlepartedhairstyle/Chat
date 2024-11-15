@@ -5,23 +5,16 @@ import (
 	"net/http"
 )
 
-const (
-	FAILED  int = -1
-	SUCCESS int = 0
-)
-
-func Success(ctx *gin.Context, msg string, data interface{}) {
+func Success(ctx *gin.Context, code int32, data interface{}) {
 	ctx.JSON(http.StatusOK, gin.H{
-		"code": SUCCESS,
-		"msg":  msg,
+		"code": code,
 		"data": data,
 	})
 }
 
-func Fail(ctx *gin.Context, msg string, data interface{}) {
+func Fail(ctx *gin.Context, code int32, data interface{}) {
 	ctx.JSON(http.StatusOK, gin.H{
-		"code": FAILED,
-		"msg":  msg,
+		"code": code,
 		"data": data,
 	})
 }

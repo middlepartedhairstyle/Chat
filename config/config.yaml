@@ -9,13 +9,13 @@ email:
   port: 465
   host: "smtp.qq.com"
   password: "kewjudnxqmakdgig"
-mysql 1:
+mysql_1:
   driver: "mysql"
   user: "user1"
   password: "123456789Lyg"
   host: "23.95.15.178"
   port: "3306"
-  db_name: "chatAI"
+  db_name: "hiwe"
 mysql:
   driver: "mysql"
   user: "root"
@@ -27,3 +27,5 @@ redis:
   addr: "23.95.15.178:6379"
   password: "luogan"
   db: 0
+kafka:
+  addr: "23.95.15.178:9092"

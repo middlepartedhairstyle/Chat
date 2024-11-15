@@ -117,13 +117,13 @@ func (groupUser *GroupUser) CreateGroupUser() bool {
 }
 
 // FindAllGroup 寻找用户所有群聊包括创建的和加入的群聊
-func (groupUser *GroupUser) FindAllGroup() []GroupUser {
+func (groupUser *GroupUser) FindAllGroup() ([]GroupUser, bool) {
 	var groupUsers []GroupUser
 	err := DB.Table(GroupUserT).Where("user_id = ?", groupUser.UserID).Find(&groupUsers).Error
 	if err != nil {
-		return []GroupUser{}
+		return []GroupUser{}, false
 	}
-	return groupUsers
+	return groupUsers, true
 }
 
 // FindAllGroupID 寻找用户所有群聊包括创建的和加入的群聊

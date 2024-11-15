@@ -92,13 +92,13 @@ func (group *GroupNum) CreateGroup() bool {
 }
 
 // FindAllCreateGroup 寻找自己建立的全部群聊
-func (group *GroupNum) FindAllCreateGroup() []GroupNum {
+func (group *GroupNum) FindAllCreateGroup() ([]GroupNum, bool) {
 	var groups []GroupNum
 	err := DB.Table(GroupNumT).Where("group_leader_id = ?", group.GroupLeaderID).Find(&groups).Error
 	if err != nil {
-		return nil
+		return nil, false
 	}
-	return groups
+	return groups, true
 }
 
 // UseGroupIDFind 使用群id找群

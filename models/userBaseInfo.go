@@ -221,13 +221,13 @@ func (user *UserBaseInfo) CreateGroup(groupName string) (*mySQL.GroupNum, bool) 
 }
 
 // FindAllCreateGroup 寻找用户创建的所有群聊
-func (user *UserBaseInfo) FindAllCreateGroup() []mySQL.GroupNum {
+func (user *UserBaseInfo) FindAllCreateGroup() ([]mySQL.GroupNum, bool) {
 	groupNum := mySQL.NewGroupNum(mySQL.SetGroupLeaderID(user.Id))
 	return groupNum.FindAllCreateGroup()
 }
 
 // FindAllGroup 寻找用户加入的所有群聊
-func (user *UserBaseInfo) FindAllGroup() []mySQL.GroupUser {
+func (user *UserBaseInfo) FindAllGroup() ([]mySQL.GroupUser, bool) {
 	groupUser := mySQL.NewGroupUser(mySQL.SetUserID(user.Id))
 	return groupUser.FindAllGroup()
 }
@@ -246,7 +246,7 @@ func (user *UserBaseInfo) FindGroup(groupInfo string) []mySQL.GroupNum {
 }
 
 // AddGroup 添加群聊(待完善)
-func (user *UserBaseInfo) AddGroup(groupID uint) interface{} {
+func (user *UserBaseInfo) AddGroup(groupID uint) (interface{}, uint8) {
 	group := mySQL.NewGroupNum(mySQL.SetGroupNumID(groupID))
 	switch group.IsVerify() {
 	//不需要验证
@@ -255,9 +255,9 @@ func (user *UserBaseInfo) AddGroup(groupID uint) interface{} {
 		if groupUser.CreateGroupUser() {
 			//添加消息队列，发送到对应的群topic中，key设置为gtp(groupID/max)
 
-			return *groupUser
+			return *groupUser, 0
 		} else {
-			return nil
+			return nil, 0
 		}
 	//需要验证
 	case 1:
@@ -270,14 +270,14 @@ func (user *UserBaseInfo) AddGroup(groupID uint) interface{} {
 			info := NewInfo()
 			err := info.WriteKafka(userMessageBase, userMessageBase.SetTopic(result.ToRequestID), result.ToRequestID)
 			if err != nil {
-				return nil
+				return nil, 1
 			}
-			return *result
+			return *result, 1
 		} else {
-			return nil
+			return nil, 1
 		}
 	default:
-		return false
+		return nil, 1
 	}
 }
 

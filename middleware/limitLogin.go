@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/middlepartedhairstyle/HiWe/redis"
-	"net/http"
+	"github.com/middlepartedhairstyle/HiWe/utils"
 	"time"
 )
 
 const maxRequestOfLogin = 5
 const expirationLogin = 1 * time.Minute // 请求计数的过期时间设置为1分钟
+
+const (
+	RequestsTooFrequent = 40002 //请求过于频繁
+)
 
 // LimitLogin 登录次数限制
 func LimitLogin(router string) gin.HandlerFunc {
@@ -23,7 +27,7 @@ func LimitLogin(router string) gin.HandlerFunc {
 		}
 
 		if count > maxRequestOfLogin {
-			c.JSON(http.StatusTooManyRequests, gin.H{"error": "大于最大次数，一个小时后再试"})
+			utils.Fail(c, RequestsTooFrequent, gin.H{"error": "大于最大次数，一个分钟后再试"})
 			c.Abort()
 			return
 		}

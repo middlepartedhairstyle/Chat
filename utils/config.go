@@ -33,6 +33,9 @@ type Config struct {
 		Password string `yaml:"password"`
 		Db       int    `yaml:"db"`
 	}
+	Kafka struct {
+		Addr string `yaml:"addr"`
+	}
 }
 
 var Cfg = Config{}

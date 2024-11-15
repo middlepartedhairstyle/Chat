@@ -1,6 +1,7 @@
 package Kafka
 
 import (
+	"github.com/middlepartedhairstyle/HiWe/utils"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -38,7 +39,7 @@ func SetConsumerMaxBytes(max int) SetConsumerGroupConfig {
 func NewConsumer(cfg ...SetConsumerGroupConfig) *kafka.Reader {
 	// make a new reader that consumes from topic-A
 	var config = kafka.ReaderConfig{
-		Brokers:  []string{"23.95.15.178:9092"},
+		Brokers:  []string{utils.Cfg.Kafka.Addr},
 		GroupID:  "0",
 		Topic:    "tp1",
 		MaxBytes: 10e6, // 10MB

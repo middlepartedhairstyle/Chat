@@ -3,6 +3,7 @@ package Kafka
 import (
 	"context"
 	"fmt"
+	"github.com/middlepartedhairstyle/HiWe/utils"
 	"github.com/segmentio/kafka-go"
 	"log"
 	"net"
@@ -30,7 +31,7 @@ func SetProducerAddr(addr string) SetProducerCfg {
 // NewProducer 新建生产者
 func NewProducer(cfg ...SetProducerCfg) *Producer {
 	writer := kafka.Writer{
-		Addr:     kafka.TCP("23.95.15.178:9092"),
+		Addr:     kafka.TCP(utils.Cfg.Kafka.Addr),
 		Topic:    "tp1",
 		Balancer: &kafka.LeastBytes{},
 	}
@@ -58,7 +59,7 @@ func (producer *Producer) WriteData(key *[]byte, value *[]byte) error {
 // CreateTopicWithRetention 创建话题并设置过期时间,args[0]为过期时间,args[1]为addr(kafka服务地址)
 func (producer *Producer) CreateTopicWithRetention(topic string, args ...string) bool {
 	retention := "86400000"
-	addr := "23.95.15.178:9092"
+	addr := utils.Cfg.Kafka.Addr
 	if len(args) > 0 {
 		retention = args[0]
 	}
@@ -107,7 +108,7 @@ func (producer *Producer) CreateTopicWithRetention(topic string, args ...string)
 
 // GetTopic 获取kafka，topic是否存在
 func (producer *Producer) GetTopic(topic string, args ...string) bool {
-	addr := "23.95.15.178:9092"
+	addr := utils.Cfg.Kafka.Addr
 	for _, arg := range args {
 		addr = arg
 	}
