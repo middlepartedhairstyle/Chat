@@ -15,7 +15,7 @@ const (
 )
 
 // CreateGroup 创建群聊
-func CreateGroup(c *gin.Context) {
+func (h *HTTPServer) CreateGroup(c *gin.Context) {
 	var user models.UserBaseInfo
 	id := c.GetHeader("id")
 	groupName, _ := c.GetPostForm("group_name")
@@ -31,7 +31,7 @@ func CreateGroup(c *gin.Context) {
 }
 
 // GetCreateGroupList 获取用户创建的全部群聊
-func GetCreateGroupList(c *gin.Context) {
+func (h *HTTPServer) GetCreateGroupList(c *gin.Context) {
 	var user models.UserBaseInfo
 	id := c.GetHeader("id")
 	user.Id, _ = utils.StringToUint(id)
@@ -46,7 +46,7 @@ func GetCreateGroupList(c *gin.Context) {
 }
 
 // GetAllGroupList 获取用户加入的全部群聊
-func GetAllGroupList(c *gin.Context) {
+func (h *HTTPServer) GetAllGroupList(c *gin.Context) {
 	var user models.UserBaseInfo
 	id := c.GetHeader("id")
 	user.Id, _ = utils.StringToUint(id)
@@ -62,7 +62,7 @@ func GetAllGroupList(c *gin.Context) {
 }
 
 // FindGroup 寻找群
-func FindGroup(c *gin.Context) {
+func (h *HTTPServer) FindGroup(c *gin.Context) {
 	var user models.UserBaseInfo
 	info := c.Query("group_info")
 	group := user.FindGroup(info)
@@ -72,7 +72,7 @@ func FindGroup(c *gin.Context) {
 }
 
 // AddGroup 添加群聊
-func AddGroup(c *gin.Context) {
+func (h *HTTPServer) AddGroup(c *gin.Context) {
 	var user models.UserBaseInfo
 	groupIDString := c.Query("group_id")
 	user.Id, _ = utils.StringToUint(c.GetHeader("id"))
@@ -94,7 +94,7 @@ func AddGroup(c *gin.Context) {
 func GetRequestGroupList(c *gin.Context) {}
 
 // DisposeAddGroup 群主处理添加群的消息
-func DisposeAddGroup(c *gin.Context) {
+func (h *HTTPServer) DisposeAddGroup(c *gin.Context) {
 	var user models.UserBaseInfo
 	groupIDString := c.Query("request_id")
 	stateString := c.Query("state")

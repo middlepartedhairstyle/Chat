@@ -2,7 +2,7 @@ package models
 
 import (
 	"context"
-	"github.com/middlepartedhairstyle/HiWe/mySQL"
+	"github.com/middlepartedhairstyle/HiWe/mySQL/tables"
 	"github.com/middlepartedhairstyle/HiWe/redis"
 	"github.com/middlepartedhairstyle/HiWe/utils"
 	"time"
@@ -37,7 +37,7 @@ func (u *UserVerify) CheckCode(key string) bool {
 
 // EmailIsUser 查询该邮箱是否为用户
 func (user *UserBaseInfo) EmailIsUser() (bool, error) {
-	var u mySQL.UserBaseInfoTable
+	var u tables.UserBaseInfo
 	u.Email = user.Email
 	b, err := u.UseEmailSelect()
 	//如果错误就返回错误
@@ -46,7 +46,7 @@ func (user *UserBaseInfo) EmailIsUser() (bool, error) {
 
 // CreateUser 创建用户
 func (user *UserBaseInfo) CreateUser() bool {
-	var u mySQL.UserBaseInfoTable
+	var u tables.UserBaseInfo
 	u.Email = user.Email                                                     //用户邮箱
 	u.Username = user.Username                                               //用户名
 	u.Sale = utils.RandString()                                              //用户密码密钥
@@ -62,12 +62,12 @@ func (user *UserBaseInfo) CreateUser() bool {
 	}
 }
 
-// Delete 删除用户信息
-func (user *UserBaseInfo) Delete() {}
+// DeleteUser 用户注销且不能被找回
+func (user *UserBaseInfo) DeleteUser() {}
 
 // UserInfo 获取用户基本信息
 func (user *UserBaseInfo) UserInfo() bool {
-	var u mySQL.UserBaseInfoTable
+	var u tables.UserBaseInfo
 	u.Email = user.Email
 	b, err := u.UseEmailSelect()
 	if err != nil || !b {
@@ -84,7 +84,7 @@ func (user *UserBaseInfo) UserInfo() bool {
 
 // CheckPassword 验证用户密码正确性
 func (user *UserBaseInfo) CheckPassword() bool {
-	var u mySQL.UserBaseInfoTable
+	var u tables.UserBaseInfo
 	u.Email = user.Email
 	b, err := u.UseEmailSelect()
 	if err != nil {
@@ -99,7 +99,7 @@ func (user *UserBaseInfo) CheckPassword() bool {
 
 // UpdateToken 更新token(使用邮箱更新token)
 func (user *UserBaseInfo) UpdateToken() bool {
-	var u mySQL.UserBaseInfoTable
+	var u tables.UserBaseInfo
 	u.Email = user.Email
 	u.Token = utils.MakeToken(user.Email, user.Password, utils.RandString())
 	//数据库token更新
@@ -112,7 +112,7 @@ func (user *UserBaseInfo) UpdateToken() bool {
 
 // CheckToken 确认用户token(使用用户id确认)
 func (user *UserBaseInfo) CheckToken() bool {
-	var u mySQL.UserBaseInfoTable
+	var u tables.UserBaseInfo
 	if redis.CheckToken(user.Id, user.Token) {
 		return true
 	} else {
@@ -123,15 +123,59 @@ func (user *UserBaseInfo) CheckToken() bool {
 	}
 }
 
+// ChangeEmail 更改用户邮箱,校验新邮箱是否被注册并且是否属于该用户
+func (user *UserBaseInfo) ChangeEmail() bool {
+	var u tables.UserBaseInfo
+	u.Email = user.Email
+	u.ID = user.Id
+	u.UseUserIDSelectPassword()
+	u.Token = utils.MakeToken(user.Email, user.Password, utils.RandString())
+
+	if u.ChangeEmail() {
+		redis.UpdateToken(u.ID, u.Token)
+		user.Token = u.Token
+		return true
+	} else {
+		return false
+	}
+}
+
+// ChangeUserName 更改用户名
+func (user *UserBaseInfo) ChangeUserName() bool {
+	var u tables.UserBaseInfo
+	u.ID = user.Id
+	if u.ChangeBaseUserInfo("username", user.Username) {
+		return true
+	} else {
+		return false
+	}
+}
+
+// ChangePassword 更改用户密码,存储加密后密码和密钥同时更新token
+func (user *UserBaseInfo) ChangePassword() bool {
+	var u tables.UserBaseInfo
+	u.ID = user.Id
+	u.Sale = utils.RandString()
+	u.Password = utils.MakePasswordSha256(user.Password, u.Sale)
+	u.Token = utils.MakeToken(user.Email, user.Password, utils.RandString())
+	if u.ChangePassword() {
+		redis.UpdateToken(u.ID, u.Token)
+		user.Token = u.Token
+		return true
+	} else {
+		return false
+	}
+}
+
 // GetFriendList 获取好友列表
-func (user *UserBaseInfo) GetFriendList() ([]mySQL.Friends, bool) {
-	var f mySQL.Friends
+func (user *UserBaseInfo) GetFriendList() ([]tables.Friends, bool) {
+	var f tables.Friends
 	return f.GetFriendList(user.Id)
 }
 
 // GetRequestFriendList 获取好友请求添加列表
-func (user *UserBaseInfo) GetRequestFriendList() ([]mySQL.RequestFriend, bool) {
-	var f mySQL.RequestFriend
+func (user *UserBaseInfo) GetRequestFriendList() ([]tables.RequestFriend, bool) {
+	var f tables.RequestFriend
 	f.ToRequestID = user.Id
 	return f.GetAllRequest()
 }
@@ -139,11 +183,11 @@ func (user *UserBaseInfo) GetRequestFriendList() ([]mySQL.RequestFriend, bool) {
 // RequestAddFriend 发起添加好友请求(后期添加消息队列，实时了解)
 func (user *UserBaseInfo) RequestAddFriend(fromId uint, toId uint) bool {
 	//请求表
-	var r mySQL.RequestFriend
+	var r tables.RequestFriend
 	r.FromRequestID = fromId
 	r.ToRequestID = toId
 	//好友表
-	var f mySQL.Friends
+	var f tables.Friends
 	f.UserOneID = fromId
 	f.UserTwoID = toId
 	//判断是否为存在该请求，是否为好友
@@ -155,8 +199,8 @@ func (user *UserBaseInfo) RequestAddFriend(fromId uint, toId uint) bool {
 }
 
 // DisposeAddFriend 处理加好友请求,同意添加为好友,拒绝加好友(后期添加消息队列，实时了解)
-func (user *UserBaseInfo) DisposeAddFriend(f mySQL.Friends, requestId uint, state uint8) (bool, uint8) {
-	var r mySQL.RequestFriend
+func (user *UserBaseInfo) DisposeAddFriend(f tables.Friends, requestId uint, state uint8) (bool, uint8) {
+	var r tables.RequestFriend
 	//好友添加请求id
 	r.ID = requestId
 	r.FromRequestID = f.UserOneID
@@ -164,7 +208,7 @@ func (user *UserBaseInfo) DisposeAddFriend(f mySQL.Friends, requestId uint, stat
 	if r.ID == r.GetID() {
 		//获取好友请求表内的状态
 		r.GetState()
-		if state == mySQL.Agree && r.State == mySQL.Await {
+		if state == tables.Agree && r.State == tables.Await {
 			//判断是否为好友
 			if !f.IsFriend() {
 				//添加好友
@@ -185,7 +229,7 @@ func (user *UserBaseInfo) DisposeAddFriend(f mySQL.Friends, requestId uint, stat
 			}
 			//0表示已为好友
 			return false, 0
-		} else if state == mySQL.Refuse && r.State == mySQL.Await {
+		} else if state == tables.Refuse && r.State == tables.Await {
 			r.SetState(state)
 
 			//(后期添加消息队列，实时了解)
@@ -212,8 +256,8 @@ func (user *UserBaseInfo) DisposeAddFriend(f mySQL.Friends, requestId uint, stat
 func (user *UserBaseInfo) DeleteFriend() bool { return false }
 
 // CreateGroup 新建群
-func (user *UserBaseInfo) CreateGroup(groupName string) (*mySQL.GroupNum, bool) {
-	groupNum := mySQL.NewGroupNum(mySQL.SetGroupLeaderID(user.Id), mySQL.SetGroupName(groupName))
+func (user *UserBaseInfo) CreateGroup(groupName string) (*tables.GroupNum, bool) {
+	groupNum := tables.NewGroupNum(tables.SetGroupLeaderID(user.Id), tables.SetGroupName(groupName))
 	if groupNum.CreateGroup() {
 		return groupNum, true
 	}
@@ -221,37 +265,37 @@ func (user *UserBaseInfo) CreateGroup(groupName string) (*mySQL.GroupNum, bool) 
 }
 
 // FindAllCreateGroup 寻找用户创建的所有群聊
-func (user *UserBaseInfo) FindAllCreateGroup() ([]mySQL.GroupNum, bool) {
-	groupNum := mySQL.NewGroupNum(mySQL.SetGroupLeaderID(user.Id))
+func (user *UserBaseInfo) FindAllCreateGroup() ([]tables.GroupNum, bool) {
+	groupNum := tables.NewGroupNum(tables.SetGroupLeaderID(user.Id))
 	return groupNum.FindAllCreateGroup()
 }
 
 // FindAllGroup 寻找用户加入的所有群聊
-func (user *UserBaseInfo) FindAllGroup() ([]mySQL.GroupUser, bool) {
-	groupUser := mySQL.NewGroupUser(mySQL.SetUserID(user.Id))
+func (user *UserBaseInfo) FindAllGroup() ([]tables.GroupUser, bool) {
+	groupUser := tables.NewGroupUser(tables.SetUserID(user.Id))
 	return groupUser.FindAllGroup()
 }
 
 // FindGroup 使用群id或群名寻找群
-func (user *UserBaseInfo) FindGroup(groupInfo string) []mySQL.GroupNum {
+func (user *UserBaseInfo) FindGroup(groupInfo string) []tables.GroupNum {
 	info, err := utils.StringToUint(groupInfo)
 	switch err {
 	case nil:
-		group := mySQL.NewGroupNum(mySQL.SetGroupNumID(info))
+		group := tables.NewGroupNum(tables.SetGroupNumID(info))
 		return group.UseGroupIDFind()
 	default:
-		group := mySQL.NewGroupNum(mySQL.SetGroupName(groupInfo))
+		group := tables.NewGroupNum(tables.SetGroupName(groupInfo))
 		return group.UseGroupNameFind()
 	}
 }
 
 // AddGroup 添加群聊(待完善)
 func (user *UserBaseInfo) AddGroup(groupID uint) (interface{}, uint8) {
-	group := mySQL.NewGroupNum(mySQL.SetGroupNumID(groupID))
+	group := tables.NewGroupNum(tables.SetGroupNumID(groupID))
 	switch group.IsVerify() {
 	//不需要验证
 	case 0:
-		groupUser := mySQL.NewGroupUser(mySQL.SetUserID(user.Id), mySQL.SetGroupID(groupID))
+		groupUser := tables.NewGroupUser(tables.SetUserID(user.Id), tables.SetGroupID(groupID))
 		if groupUser.CreateGroupUser() {
 			//添加消息队列，发送到对应的群topic中，key设置为gtp(groupID/max)
 
@@ -262,7 +306,7 @@ func (user *UserBaseInfo) AddGroup(groupID uint) (interface{}, uint8) {
 	//需要验证
 	case 1:
 		group.GetGroupLeaderID()
-		groupRequest := mySQL.NewRequestAddGroup(mySQL.SetFromRequestID(user.Id), mySQL.SetToRequestID(group.GroupLeaderID), mySQL.SetAddGroupID(group.ID))
+		groupRequest := tables.NewRequestAddGroup(tables.SetFromRequestID(user.Id), tables.SetToRequestID(group.GroupLeaderID), tables.SetAddGroupID(group.ID))
 		result := groupRequest.CreateRequestAddGroup()
 		if result != nil {
 			//在此处添加消息队列
@@ -283,13 +327,13 @@ func (user *UserBaseInfo) AddGroup(groupID uint) (interface{}, uint8) {
 
 // DisposeAddGroup 处理用户添加群聊，应使用冷热结合的方法，过久没有处理就存入数据库
 func (user *UserBaseInfo) DisposeAddGroup(requestID uint, state uint8) (uint8, bool) {
-	request := mySQL.NewRequestAddGroup(mySQL.SetRequestAddGroupID(requestID), mySQL.SetState(state), mySQL.SetToRequestID(user.Id))
+	request := tables.NewRequestAddGroup(tables.SetRequestAddGroupID(requestID), tables.SetState(state), tables.SetToRequestID(user.Id))
 	if request.ChickToUser() {
 		switch request.State {
 		case 1:
 			if request.ChangeState() {
 				//创建群用户，将被确认者加入群中
-				groupUser := mySQL.NewGroupUser(mySQL.SetUserID(request.FromRequestID), mySQL.SetGroupID(request.AddGroupID))
+				groupUser := tables.NewGroupUser(tables.SetUserID(request.FromRequestID), tables.SetGroupID(request.AddGroupID))
 				if groupUser.CreateGroupUser() {
 					//kafka,将创建的groupUser数据发给请求者
 					//将请求者加入该组的kafka，topic

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const maxTokenTime = 240 * time.Hour
+const maxTokenTime = 720 * time.Hour //设置token过期时间为30天
 
 var ctx = context.Background()
 

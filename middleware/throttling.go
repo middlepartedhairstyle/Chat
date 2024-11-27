@@ -36,6 +36,7 @@ func RateLimiter(router string) gin.HandlerFunc {
 			}
 
 			if count > maxRequestsOfIP {
+				time.Sleep(3 * time.Second) //对于异常用户进行延迟处理
 				utils.Fail(c, RequestsTooFrequent, gin.H{"error": "请求过于频繁，请稍后再试"})
 				c.Abort()
 				return
@@ -61,6 +62,7 @@ func RateLimiter(router string) gin.HandlerFunc {
 			}
 
 			if count1 > maxRequestsOfIP && count2 > maxRequestsOfUser {
+				time.Sleep(3 * time.Second) //对于异常用户进行延迟处理
 				utils.Fail(c, RequestsTooFrequent, gin.H{"error": "请求过于频繁，请稍后再试"})
 				c.Abort()
 				return

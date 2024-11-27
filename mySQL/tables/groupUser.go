@@ -1,6 +1,7 @@
-package mySQL
+package tables
 
 import (
+	"github.com/middlepartedhairstyle/HiWe/mySQL"
 	"gorm.io/gorm"
 	"time"
 )
@@ -96,16 +97,16 @@ func NewGroupUser(opts ...GroupUserOpt) *GroupUser {
 func (groupUser *GroupUser) CreateGroupUser() bool {
 	var count1 int64
 	var count2 int64
-	err := DB.Table(GroupUserT).Where("group_id=? and user_id=?", groupUser.GroupID, groupUser.UserID).Count(&count1).Error
+	err := mySQL.DB.Table(mySQL.GroupUserT).Where("group_id=? and user_id=?", groupUser.GroupID, groupUser.UserID).Count(&count1).Error
 	if err != nil {
 		return false
 	}
-	err = DB.Table(GroupNumT).Where("id=?", groupUser.GroupID).Count(&count2).Error
+	err = mySQL.DB.Table(mySQL.GroupNumT).Where("id=?", groupUser.GroupID).Count(&count2).Error
 	if err != nil {
 		return false
 	}
 	if count1 <= 0 && count2 > 0 {
-		err = DB.Table(GroupUserT).Create(groupUser).Error
+		err = mySQL.DB.Table(mySQL.GroupUserT).Create(groupUser).Error
 		if err != nil {
 			return false
 		}
@@ -119,7 +120,7 @@ func (groupUser *GroupUser) CreateGroupUser() bool {
 // FindAllGroup 寻找用户所有群聊包括创建的和加入的群聊
 func (groupUser *GroupUser) FindAllGroup() ([]GroupUser, bool) {
 	var groupUsers []GroupUser
-	err := DB.Table(GroupUserT).Where("user_id = ?", groupUser.UserID).Find(&groupUsers).Error
+	err := mySQL.DB.Table(mySQL.GroupUserT).Where("user_id = ?", groupUser.UserID).Find(&groupUsers).Error
 	if err != nil {
 		return []GroupUser{}, false
 	}
@@ -129,7 +130,7 @@ func (groupUser *GroupUser) FindAllGroup() ([]GroupUser, bool) {
 // FindAllGroupID 寻找用户所有群聊包括创建的和加入的群聊
 func (groupUser *GroupUser) FindAllGroupID() []uint {
 	var groupIDs []uint
-	err := DB.Table(GroupUserT).Where("user_id = ?", groupUser.UserID).Select("group_id").Scan(&groupIDs).Error
+	err := mySQL.DB.Table(mySQL.GroupUserT).Where("user_id = ?", groupUser.UserID).Select("group_id").Scan(&groupIDs).Error
 	if err != nil {
 		return nil
 	}
@@ -139,7 +140,7 @@ func (groupUser *GroupUser) FindAllGroupID() []uint {
 // FindGroupUserID 寻找用户所有群聊用户ID
 func (groupUser *GroupUser) FindGroupUserID() []uint {
 	var groupUserIDs []uint
-	err := DB.Table(GroupUserT).Where("user_id = ?", groupUser.UserID).Select("id").Scan(&groupUserIDs).Error
+	err := mySQL.DB.Table(mySQL.GroupUserT).Where("user_id = ?", groupUser.UserID).Select("id").Scan(&groupUserIDs).Error
 	if err != nil {
 		return nil
 	}
@@ -150,7 +151,7 @@ func (groupUser *GroupUser) FindGroupUserID() []uint {
 func (groupUser *GroupUser) FindAllGroupUser() []GroupUserInfo {
 
 	var groupUsers []GroupUserInfo
-	err := DB.Table(GroupUserT).Where("group_id = ?", groupUser.GroupID).Select("id,group_id,user_id,level,relationship").Find(&groupUsers).Error
+	err := mySQL.DB.Table(mySQL.GroupUserT).Where("group_id = ?", groupUser.GroupID).Select("id,group_id,user_id,level,relationship").Find(&groupUsers).Error
 	if err != nil {
 		return nil
 	}
@@ -160,12 +161,12 @@ func (groupUser *GroupUser) FindAllGroupUser() []GroupUserInfo {
 // IsGroupUserGetID 判断是否为群用户并返回群用户id(groupUserID)
 func (groupUser *GroupUser) IsGroupUserGetID() bool {
 	var count int64
-	err := DB.Table(GroupUserT).Where("group_id=? and user_id=?", groupUser.GroupID, groupUser.UserID).Count(&count).Error
+	err := mySQL.DB.Table(mySQL.GroupUserT).Where("group_id=? and user_id=?", groupUser.GroupID, groupUser.UserID).Count(&count).Error
 	if err != nil {
 		return false
 	}
 	if count > 0 {
-		err = DB.Table(GroupUserT).Where("group_id=? and user_id=?", groupUser.GroupID, groupUser.UserID).Select("id").Scan(&groupUser.ID).Error
+		err = mySQL.DB.Table(mySQL.GroupUserT).Where("group_id=? and user_id=?", groupUser.GroupID, groupUser.UserID).Select("id").Scan(&groupUser.ID).Error
 		if err != nil {
 			return false
 		}

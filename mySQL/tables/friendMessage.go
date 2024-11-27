@@ -1,6 +1,9 @@
-package mySQL
+package tables
 
-import "gorm.io/gorm"
+import (
+	"github.com/middlepartedhairstyle/HiWe/mySQL"
+	"gorm.io/gorm"
+)
 
 // FriendMessage 用户消息
 type FriendMessage struct {
@@ -24,12 +27,12 @@ func NewFriendMessage(fromId uint, friendId uint, messageType uint8, message *st
 // CreateFriendMessage 将好友消息放入数据库中
 func (friendMessage *FriendMessage) CreateFriendMessage() bool {
 	var count int64
-	err := DB.Table(FriendT).Where("id=?", friendMessage.FriendID).Count(&count).Error
+	err := mySQL.DB.Table(mySQL.FriendT).Where("id=?", friendMessage.FriendID).Count(&count).Error
 	if err != nil {
 		return false
 	}
 	if count > 0 {
-		err = DB.Table(FriendMessageT).Create(friendMessage).Error
+		err = mySQL.DB.Table(mySQL.FriendMessageT).Create(friendMessage).Error
 		if err != nil {
 			return false
 		}

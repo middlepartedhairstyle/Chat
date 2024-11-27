@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	Kafka "github.com/middlepartedhairstyle/HiWe/kafka"
-	"github.com/middlepartedhairstyle/HiWe/mySQL"
+	"github.com/middlepartedhairstyle/HiWe/mySQL/tables"
 	"github.com/segmentio/kafka-go"
 	"strconv"
 )
@@ -90,7 +90,7 @@ func (userMessage *UserChatMessage) SetConsumerID() uint {
 	switch userMessage.Media {
 	//消息种类为好友消息
 	case MediaFriend:
-		var friend mySQL.Friends
+		var friend tables.Friends
 		friend.ID = userMessage.ToID
 		b := friend.FindTwoUserID()
 		if b {
@@ -216,7 +216,7 @@ func (userMessage *UserChatMessage) FriendMessageTypeDispose() bool {
 	switch userMessage.MessageType {
 	//消息类型为文本
 	case MessageTypeText:
-		friendMessage := mySQL.NewFriendMessage(userMessage.FromID, userMessage.ToID, userMessage.MessageType, &(userMessage.Message))
+		friendMessage := tables.NewFriendMessage(userMessage.FromID, userMessage.ToID, userMessage.MessageType, &(userMessage.Message))
 		return friendMessage.CreateFriendMessage()
 	//消息类型为图片
 	case MessageTypeImage:
@@ -234,7 +234,7 @@ func (userMessage *UserChatMessage) GroupMessageTypeDispose() bool {
 	switch userMessage.MessageType {
 	//消息类型为文本
 	case MessageTypeText:
-		groupMessage := mySQL.NewGroupMessage(userMessage.FromID, userMessage.ToID, userMessage.MessageType, &(userMessage.Message))
+		groupMessage := tables.NewGroupMessage(userMessage.FromID, userMessage.ToID, userMessage.MessageType, &(userMessage.Message))
 		return groupMessage.CreateGroupMessage()
 	//消息类型为图片
 	case MessageTypeImage:
@@ -253,7 +253,7 @@ func (userMessage *UserChatMessage) JudgeFriend(infoVerify map[string]uint) bool
 	if infoVerify[ChatWithFriend+strconv.Itoa(int(userMessage.ToID))] != 0 {
 		return true
 	} else {
-		friend := mySQL.NewFriend(mySQL.SetFriendID(userMessage.ToID), mySQL.SetUserOneID(userMessage.FromID))
+		friend := tables.NewFriend(tables.SetFriendID(userMessage.ToID), tables.SetUserOneID(userMessage.FromID))
 		toFriendID, b := friend.IsFriendUseFriendID()
 		if b {
 			infoVerify[ChatWithFriend+strconv.Itoa(int(userMessage.ToID))] = toFriendID
@@ -268,7 +268,7 @@ func (userMessage *UserChatMessage) JudgeGroupUser(infoVerify map[string]uint) b
 	if infoVerify[ChatWithGroup+strconv.Itoa(int(userMessage.ToID))] != 0 {
 		return true
 	} else {
-		groupUser := mySQL.NewGroupUser(mySQL.SetUserID(userMessage.FromID), mySQL.SetGroupID(userMessage.ToID))
+		groupUser := tables.NewGroupUser(tables.SetUserID(userMessage.FromID), tables.SetGroupID(userMessage.ToID))
 		if groupUser.IsGroupUserGetID() {
 			infoVerify[ChatWithGroup+strconv.Itoa(int(userMessage.ToID))] = groupUser.UserID
 			return true
@@ -322,7 +322,7 @@ func (userMessage *UserChatMessage) GetGroupMessage(id uint, ws *WebSocketClient
 	}()
 	var message []byte // 消息
 	var topics = make(map[uint]string)
-	groupUser := mySQL.NewGroupUser(mySQL.SetUserID(id))
+	groupUser := tables.NewGroupUser(tables.SetUserID(id))
 	groups := groupUser.FindAllGroupID()
 	//寻找topic，同时去重
 	for _, group := range groups {

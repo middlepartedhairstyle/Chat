@@ -31,6 +31,7 @@ func Init() {
 	CreateTable(&(FriendsTable{}))       //用户好友列表
 	CreateTable(&(RequestAddFriendTable{}))
 	CreateTable(&(RequestAddGroupTable{}))
+	CreateTable(&(UserDetailedInfoTable{}))
 }
 
 func CreateTable(table interface{}) {

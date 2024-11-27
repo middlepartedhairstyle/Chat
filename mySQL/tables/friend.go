@@ -1,6 +1,9 @@
-package mySQL
+package tables
 
-import "gorm.io/gorm"
+import (
+	"github.com/middlepartedhairstyle/HiWe/mySQL"
+	"gorm.io/gorm"
+)
 
 type Friends struct {
 	gorm.Model
@@ -63,7 +66,7 @@ func NewFriend(opts ...FriendOpt) *Friends {
 func (friend *Friends) GetFriendList(userId uint) ([]Friends, bool) {
 	var friendList []Friends
 	// 使用 GORM 的 Find 方法来查询
-	if err := DB.Table(FriendT).Where("user_one_id = ? OR user_two_id = ?", userId, userId).Find(&friendList).Error; err != nil {
+	if err := mySQL.DB.Table(mySQL.FriendT).Where("user_one_id = ? OR user_two_id = ?", userId, userId).Find(&friendList).Error; err != nil {
 		return nil, false
 	}
 	// 返回好友列表
@@ -73,7 +76,7 @@ func (friend *Friends) GetFriendList(userId uint) ([]Friends, bool) {
 // FindAllFriendId 获取所有好友id
 func FindAllFriendId(userId uint) []uint {
 	var friendList []uint
-	if err := DB.Table(FriendT).Where("user_one_id = ? OR user_two_id = ?", userId, userId).Select("id").Find(&friendList).Error; err != nil {
+	if err := mySQL.DB.Table(mySQL.FriendT).Where("user_one_id = ? OR user_two_id = ?", userId, userId).Select("id").Find(&friendList).Error; err != nil {
 		return nil
 	}
 	return friendList
@@ -81,7 +84,7 @@ func FindAllFriendId(userId uint) []uint {
 
 // AddFriend 添加好友
 func (friend *Friends) AddFriend() bool {
-	err := DB.Table(FriendT).Create(&friend).Error
+	err := mySQL.DB.Table(mySQL.FriendT).Create(&friend).Error
 	if err != nil {
 		return false
 	}
@@ -91,7 +94,7 @@ func (friend *Friends) AddFriend() bool {
 // IsFriend 判断是否为好友
 func (friend *Friends) IsFriend() bool {
 	var count int64
-	err := DB.Table(FriendT).Where("(user_one_id = ? AND user_two_id = ?) OR (user_one_id = ? AND user_two_id = ?)", friend.UserOneID, friend.UserTwoID, friend.UserTwoID, friend.UserOneID).Count(&count).Error
+	err := mySQL.DB.Table(mySQL.FriendT).Where("(user_one_id = ? AND user_two_id = ?) OR (user_one_id = ? AND user_two_id = ?)", friend.UserOneID, friend.UserTwoID, friend.UserTwoID, friend.UserOneID).Count(&count).Error
 	if err != nil {
 		return false
 	}
@@ -101,19 +104,19 @@ func (friend *Friends) IsFriend() bool {
 func (friend *Friends) IsFriendUseFriendID() (uint, bool) {
 	var count int64
 	var toFriendID uint
-	err := DB.Table(FriendT).Where("(id = ? AND user_two_id = ?) OR (user_one_id = ? AND id = ?)", friend.ID, friend.UserOneID, friend.UserOneID, friend.ID).Count(&count).Error
+	err := mySQL.DB.Table(mySQL.FriendT).Where("(id = ? AND user_two_id = ?) OR (user_one_id = ? AND id = ?)", friend.ID, friend.UserOneID, friend.UserOneID, friend.ID).Count(&count).Error
 	if err != nil {
 		return 0, false
 	}
 	if count > 0 {
-		err = DB.Table(FriendT).Where("(id = ? AND user_two_id = ?) OR (user_one_id = ? AND id = ?)", friend.ID, friend.UserOneID, friend.UserOneID, friend.ID).Select("user_one_id").Scan(&toFriendID).Error
+		err = mySQL.DB.Table(mySQL.FriendT).Where("(id = ? AND user_two_id = ?) OR (user_one_id = ? AND id = ?)", friend.ID, friend.UserOneID, friend.UserOneID, friend.ID).Select("user_one_id").Scan(&toFriendID).Error
 		if err != nil {
 			return 0, false
 		}
 		if toFriendID != friend.UserOneID {
 			return toFriendID, true
 		} else {
-			err = DB.Table(FriendT).Where("(id = ? AND user_two_id = ?) OR (user_one_id = ? AND id = ?)", friend.ID, friend.UserOneID, friend.UserOneID, friend.ID).Select("user_two_id").Scan(&toFriendID).Error
+			err = mySQL.DB.Table(mySQL.FriendT).Where("(id = ? AND user_two_id = ?) OR (user_one_id = ? AND id = ?)", friend.ID, friend.UserOneID, friend.UserOneID, friend.ID).Select("user_two_id").Scan(&toFriendID).Error
 			if err != nil {
 				return 0, false
 			}
@@ -126,7 +129,7 @@ func (friend *Friends) IsFriendUseFriendID() (uint, bool) {
 
 // FindTwoUserID 寻找两好友的id
 func (friend *Friends) FindTwoUserID() bool {
-	if err := DB.Table(FriendT).Where("id = ?", friend.ID).Select("user_one_id,user_two_id").Find(&friend).Error; err != nil {
+	if err := mySQL.DB.Table(mySQL.FriendT).Where("id = ?", friend.ID).Select("user_one_id,user_two_id").Find(&friend).Error; err != nil {
 		return false
 	}
 	return true

@@ -105,6 +105,7 @@ func (ws *WebSocketClient) GetMessage(id uint) {
 				fmt.Println("Error writing message to websocket:", err)
 				continue
 			}
+		default:
 		}
 	}
 }

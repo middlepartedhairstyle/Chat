@@ -11,6 +11,7 @@ const (
 	FriendT           string = "friends_tables"
 	RequestAddFriendT string = "request_add_friend_tables"
 	RequestAddGroupT  string = "request_add_group_tables"
+	UserDetailedInfoT string = "user_detailed_info_tables"
 )
 
 // UserBaseInfoTable 用户基础信息(数据库)
@@ -99,4 +100,12 @@ type RequestAddGroupTable struct {
 	ToRequestID     uint              `gorm:"type:int(11);not null;uniqueIndex:idx_group_request"` //接收请求的用户id
 	AddGroupID      uint              `gorm:"type:int(11);not null;uniqueIndex:idx_group_request"`
 	State           uint8             `gorm:"type:tinyint(1)"` //是否同意加群,1为同意,2为待定未确认,3为拒绝
+}
+
+// UserDetailedInfoTable 用户详细信息表
+type UserDetailedInfoTable struct {
+	gorm.Model
+	UserBaseInfo UserBaseInfoTable `gorm:"foreignKey:UserID;references:ID"`
+	UserID       uint              `gorm:"type:int(11);not null;uniqueIndex:idx_user"`
+	ProfilePhoto string            `gorm:"type:varchar(255)"` //用户头像
 }

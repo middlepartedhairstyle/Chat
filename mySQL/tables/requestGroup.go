@@ -1,7 +1,8 @@
-package mySQL
+package tables
 
 import (
 	"fmt"
+	"github.com/middlepartedhairstyle/HiWe/mySQL"
 	"gorm.io/gorm"
 )
 
@@ -62,7 +63,7 @@ func NewRequestAddGroup(opts ...RequestGroupOpt) *RequestAddGroup {
 // GetRequestAddGroupList 获取加群请求列表
 func (request *RequestAddGroup) GetRequestAddGroupList() []RequestAddGroup {
 	var result []RequestAddGroup
-	err := DB.Table(RequestAddGroupT).Where("to_request_id=?", request.ToRequestID).Find(&result).Error
+	err := mySQL.DB.Table(mySQL.RequestAddGroupT).Where("to_request_id=?", request.ToRequestID).Find(&result).Error
 	if err != nil {
 		return nil
 	}
@@ -72,12 +73,12 @@ func (request *RequestAddGroup) GetRequestAddGroupList() []RequestAddGroup {
 // CreateRequestAddGroup 创建用户加群需求
 func (request *RequestAddGroup) CreateRequestAddGroup() *RequestAddGroup {
 	var count int64
-	err := DB.Table(RequestAddGroupT).Where("from_request_id=? and to_request_id=? and add_group_id=?", request.FromRequestID, request.ToRequestID, request.AddGroupID).Count(&count).Error
+	err := mySQL.DB.Table(mySQL.RequestAddGroupT).Where("from_request_id=? and to_request_id=? and add_group_id=?", request.FromRequestID, request.ToRequestID, request.AddGroupID).Count(&count).Error
 	if err != nil {
 		return nil
 	}
 	if count <= 0 {
-		err = DB.Table(RequestAddGroupT).Create(request).Error
+		err = mySQL.DB.Table(mySQL.RequestAddGroupT).Create(request).Error
 		if err != nil {
 			return nil
 		}
@@ -90,21 +91,21 @@ func (request *RequestAddGroup) CreateRequestAddGroup() *RequestAddGroup {
 func (request *RequestAddGroup) ChangeState() bool {
 	var state uint8
 	var count int64
-	err := DB.Table(RequestAddGroupT).Where("id=?", request.ID).Count(&count).Error
+	err := mySQL.DB.Table(mySQL.RequestAddGroupT).Where("id=?", request.ID).Count(&count).Error
 	if err != nil {
 		return false
 	}
 	if count > 0 {
-		err = DB.Table(RequestAddGroupT).Where("id=?", request.ID).Select("state").Scan(&state).Error
+		err = mySQL.DB.Table(mySQL.RequestAddGroupT).Where("id=?", request.ID).Select("state").Scan(&state).Error
 		if err != nil {
 			return false
 		}
 		if state == 2 {
-			err = DB.Table(RequestAddGroupT).Where("id=?", request.ID).Update("state", request.State).Error
+			err = mySQL.DB.Table(mySQL.RequestAddGroupT).Where("id=?", request.ID).Update("state", request.State).Error
 			if err != nil {
 				return false
 			}
-			err = DB.Table(RequestAddGroupT).Where("id=?", request.ID).Find(request).Error
+			err = mySQL.DB.Table(mySQL.RequestAddGroupT).Where("id=?", request.ID).Find(request).Error
 			return true
 		}
 		fmt.Println(state)
@@ -115,7 +116,7 @@ func (request *RequestAddGroup) ChangeState() bool {
 
 func (request *RequestAddGroup) ChickToUser() bool {
 	var count int64
-	err := DB.Table(RequestAddGroupT).Where("id=? and to_request_id=?", request.ID, request.ToRequestID).Count(&count).Error
+	err := mySQL.DB.Table(mySQL.RequestAddGroupT).Where("id=? and to_request_id=?", request.ID, request.ToRequestID).Count(&count).Error
 	if err != nil {
 		return false
 	}

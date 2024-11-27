@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/middlepartedhairstyle/HiWe/models"
-	"github.com/middlepartedhairstyle/HiWe/mySQL"
+	"github.com/middlepartedhairstyle/HiWe/mySQL/tables"
 	"github.com/middlepartedhairstyle/HiWe/utils"
 )
 
@@ -13,20 +13,20 @@ const (
 )
 
 // GetFriendList 获取好友列表
-func GetFriendList(c *gin.Context) {
+func (h *HTTPServer) GetFriendList(c *gin.Context) {
 	var user models.UserBaseInfo
 	//获取用户数据
 	user.Id, _ = utils.StringToUint(c.Query("id"))
 	//查询用户好友列表
-	var friendList []mySQL.Friends //存放列表数据
+	var friendList []tables.Friends //存放列表数据
 	friendList, _ = user.GetFriendList()
 	utils.Success(c, SUCCESS, friendList)
 }
 
 // GetRequestFriendList 获取好友请求添加列表(用于首次登录)
-func GetRequestFriendList(c *gin.Context) {
+func (h *HTTPServer) GetRequestFriendList(c *gin.Context) {
 	var user models.UserBaseInfo
-	var friendList []mySQL.RequestFriend
+	var friendList []tables.RequestFriend
 	var b bool
 	user.Id, _ = utils.StringToUint(c.Query("id"))
 	friendList, b = user.GetRequestFriendList()
@@ -42,7 +42,7 @@ func GetRequestFriendList(c *gin.Context) {
 }
 
 // RequestAddFriend 请求添加好友
-func RequestAddFriend(c *gin.Context) {
+func (h *HTTPServer) RequestAddFriend(c *gin.Context) {
 	var user models.UserBaseInfo
 	var fromId uint
 	var toId uint
@@ -64,9 +64,9 @@ func RequestAddFriend(c *gin.Context) {
 }
 
 // DisposeAddFriend 处理好友请求
-func DisposeAddFriend(c *gin.Context) {
+func (h *HTTPServer) DisposeAddFriend(c *gin.Context) {
 	var user models.UserBaseInfo
-	var friend mySQL.Friends
+	var friend tables.Friends
 	var requestId uint
 	var state uint8
 	friend.UserOneID, _ = utils.StringToUint(c.Query("from_id"))

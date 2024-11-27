@@ -1,6 +1,9 @@
-package mySQL
+package tables
 
-import "gorm.io/gorm"
+import (
+	"github.com/middlepartedhairstyle/HiWe/mySQL"
+	"gorm.io/gorm"
+)
 
 // GroupMessage 群用户消息
 type GroupMessage struct {
@@ -23,12 +26,12 @@ func NewGroupMessage(fromId uint, groupId uint, messageType uint8, message *stri
 // CreateGroupMessage 将群消息放入数据库中
 func (groupMessage *GroupMessage) CreateGroupMessage() bool {
 	var count int64
-	err := DB.Table(GroupNumT).Where("id=?", groupMessage.GroupID).Count(&count).Error
+	err := mySQL.DB.Table(mySQL.GroupNumT).Where("id=?", groupMessage.GroupID).Count(&count).Error
 	if err != nil {
 		return false
 	}
 	if count > 0 {
-		err = DB.Table(GroupMessageT).Create(groupMessage).Error
+		err = mySQL.DB.Table(mySQL.GroupMessageT).Create(groupMessage).Error
 		if err != nil {
 			return false
 		}
