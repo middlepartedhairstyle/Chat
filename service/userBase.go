@@ -269,4 +269,19 @@ func (h *HTTPServer) ChangeUserEmail(c *gin.Context) {
 }
 
 // DeleteUser 删除用户
-func DeleteUser(c *gin.Context) {}
+func (h *HTTPServer) DeleteUser(c *gin.Context) {
+	var user models.UserBaseInfo
+	ids := c.GetHeader("id")
+	id, _ := utils.StringToUint(ids)
+	user.Id = id
+	if user.DeleteUser() {
+
+		utils.Success(c, SUCCESS, gin.H{
+			"msg": user.Id,
+		})
+	} else {
+		utils.Fail(c, ServerError, gin.H{
+			"err_msg": "data dispose err",
+		})
+	}
+}

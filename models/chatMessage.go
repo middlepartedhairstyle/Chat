@@ -127,7 +127,7 @@ func (userMessage *UserChatMessage) MessageDispose(producers map[string]*Kafka.P
 	}
 }
 
-// IsFriendMessage 消息类型为好友消息的处理方式
+// IsFriendMessage 消息类型为好友消息的处理方式(发送消息)
 func (userMessage *UserChatMessage) IsFriendMessage(producers map[string]*Kafka.Producer, fromID uint, message []byte, infoVerify map[string]uint) {
 	//消息正确性验证
 	if userMessage.FromID == fromID && userMessage.JudgeFriend(infoVerify) {
@@ -181,7 +181,7 @@ func (userMessage *UserChatMessage) IsFriendMessage(producers map[string]*Kafka.
 
 }
 
-// IsGroupMessage 消息类型为群消息的处理方式
+// IsGroupMessage 消息类型为群消息的处理方式(发送消息)
 func (userMessage *UserChatMessage) IsGroupMessage(producers map[string]*Kafka.Producer, fromID uint, message []byte, infoVerify map[string]uint) {
 	//消息来源正确性验证
 	if userMessage.FromID == fromID && userMessage.JudgeGroupUser(infoVerify) {
@@ -314,14 +314,16 @@ func (userMessage *UserChatMessage) GetFriendMessage(id uint, ws *WebSocketClien
 
 // GetGroupMessage 获取群发送的消息
 func (userMessage *UserChatMessage) GetGroupMessage(id uint, ws *WebSocketClient) {
-	//已存在于数据库之中的好友用户
+	//已存在于数据库之中的群用户
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovering from panic in GetMessage:", r)
 		}
 	}()
-	var message []byte // 消息
+	//获取群用户topic
 	var topics = make(map[uint]string)
+
+	//寻找该用户加入的所有群id(groupID)
 	groupUser := tables.NewGroupUser(tables.SetUserID(id))
 	groups := groupUser.FindAllGroupID()
 	//寻找topic，同时去重
@@ -331,11 +333,12 @@ func (userMessage *UserChatMessage) GetGroupMessage(id uint, ws *WebSocketClient
 	}
 
 	for _, topic := range topics {
-		go func(topic string, groupUserID []uint) {
-			consumer := Kafka.NewConsumer(Kafka.SetConsumerTopic(topic), Kafka.SetConsumerGroupID(topic+ChatGroupUser+strconv.Itoa(int(id)))) //gtp1gu1,gtp2gu1
+		go func(topic string, groupID []uint) {
+			consumer := Kafka.NewConsumer(Kafka.SetConsumerTopic(topic), Kafka.SetConsumerGroupID(topic+ChatGroupUser+strconv.Itoa(int(id)))) //消费者的id，gtp1gu1,gtp2gu1(后期更改为GroupUserID)
 			defer func(consumer *kafka.Reader) {
 				err := consumer.Close()
 				if err != nil {
+					fmt.Println("Error reading message:", err)
 				}
 			}(consumer) // 确保消费者关闭
 			for {
@@ -345,11 +348,14 @@ func (userMessage *UserChatMessage) GetGroupMessage(id uint, ws *WebSocketClient
 					continue
 				}
 				var gKey = string(m.Key)
-				for _, key := range groups {
+
+				//消息匹配
+				for index, key := range groups {
 					if gKey == ChatWithGroup+strconv.Itoa(int(key)) {
-						message = m.Value
-						ws.messageList <- message
-					} else {
+						ws.messageList <- m.Value
+						break
+					}
+					if index == len(groups)-1 {
 						if err = consumer.CommitMessages(context.Background(), m); err != nil {
 							fmt.Printf("提交偏移量失败: %v\n", err)
 						}
@@ -358,4 +364,51 @@ func (userMessage *UserChatMessage) GetGroupMessage(id uint, ws *WebSocketClient
 			}
 		}(topic, groups)
 	}
+
+	for {
+		select {
+		case gid := <-ws.GroupChangeMessage:
+			userMessage.ChangeGroupMessage(gid, id, ws)
+		default:
+		}
+	}
+}
+
+func (userMessage *UserChatMessage) ChangeGroupMessage(groupID uint, id uint, ws *WebSocketClient) {
+	//已存在于数据库之中的群用户
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovering from panic in GetMessage:", r)
+		}
+	}()
+	//获取群用户topic
+	var topic string
+	//寻找topic，同时去重
+	var tpId = groupID/maxGroupNum + 1
+	topic = fmt.Sprintf("%s%s%d", ChatWithGroup, "tp", tpId) // 例如 gtp1, gtp
+	go func(topic string, groupID uint) {
+		consumer := Kafka.NewConsumer(Kafka.SetConsumerTopic(topic), Kafka.SetConsumerGroupID(topic+ChatGroupUser+strconv.Itoa(int(id)))) //gtp1gu1,gtp2gu1
+		defer func(consumer *kafka.Reader) {
+			err := consumer.Close()
+			if err != nil {
+				fmt.Println("Error reading message:", err)
+			}
+		}(consumer) // 确保消费者关闭
+		for {
+			m, err := consumer.ReadMessage(context.Background())
+			if err != nil {
+				fmt.Println("Error reading message:", err)
+				continue
+			}
+			var gKey = string(m.Key)
+			//消息匹配
+			if gKey == ChatWithGroup+strconv.Itoa(int(groupID)) {
+				ws.messageList <- m.Value
+			} else {
+				if err = consumer.CommitMessages(context.Background(), m); err != nil {
+					fmt.Printf("提交偏移量失败: %v\n", err)
+				}
+			}
+		}
+	}(topic, groupID)
 }

@@ -23,21 +23,19 @@ func Init() {
 	}
 
 	//数据库表创建
-	CreateTable(&(UserBaseInfoTable{}))  //用户基础信息 //用户验证码
-	CreateTable(&(GroupNumTable{}))      //用户群
-	CreateTable(&(GroupUserTable{}))     //用户群用户
-	CreateTable(&(GroupMessageTable{}))  //群消息
-	CreateTable(&(FriendMessageTable{})) //用户消息
-	CreateTable(&(FriendsTable{}))       //用户好友列表
-	CreateTable(&(RequestAddFriendTable{}))
-	CreateTable(&(RequestAddGroupTable{}))
-	CreateTable(&(UserDetailedInfoTable{}))
-}
-
-func CreateTable(table interface{}) {
-	err := DB.AutoMigrate(table)
+	err = db.AutoMigrate(
+		&UserBaseInfoTable{},
+		&FriendsTable{},
+		&FriendMessageTable{},
+		&GroupMessageTable{},
+		&GroupUserTable{},
+		&GroupNumTable{},
+		&RequestAddFriendTable{},
+		&RequestAddGroupTable{},
+		&UserDetailedInfoTable{},
+	)
 	if err != nil {
-		panic(err)
+		return
 	} else {
 		fmt.Println("success create table")
 	}

@@ -171,3 +171,16 @@ func (user *UserBaseInfo) ChangeEmail() bool {
 		return false
 	}
 }
+
+// DeleteUser 删除用户
+func (user *UserBaseInfo) DeleteUser() bool {
+	if user.CheckUserID() {
+		err := mySQL.DB.Table(mySQL.UserBaseInfoT).Where("id=?", user.ID).Delete(user).Error
+		if err != nil {
+			return false
+		}
+		return true
+	} else {
+		return false
+	}
+}

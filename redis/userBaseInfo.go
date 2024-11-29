@@ -31,3 +31,11 @@ func CheckToken(id uint, token string) bool {
 	}
 	return false
 }
+
+func DeleteToken(id uint) bool {
+	err := Rdb.Del(ctx, "token"+strconv.Itoa(int(id))).Err()
+	if err != nil {
+		return false
+	}
+	return true
+}

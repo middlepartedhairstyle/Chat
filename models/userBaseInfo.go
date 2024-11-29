@@ -63,7 +63,11 @@ func (user *UserBaseInfo) CreateUser() bool {
 }
 
 // DeleteUser 用户注销且不能被找回
-func (user *UserBaseInfo) DeleteUser() {}
+func (user *UserBaseInfo) DeleteUser() bool {
+	var u tables.UserBaseInfo
+	u.ID = user.Id
+	return u.DeleteUser() && redis.DeleteToken(u.ID)
+}
 
 // UserInfo 获取用户基本信息
 func (user *UserBaseInfo) UserInfo() bool {
@@ -298,7 +302,14 @@ func (user *UserBaseInfo) AddGroup(groupID uint) (interface{}, uint8) {
 		groupUser := tables.NewGroupUser(tables.SetUserID(user.Id), tables.SetGroupID(groupID))
 		if groupUser.CreateGroupUser() {
 			//添加消息队列，发送到对应的群topic中，key设置为gtp(groupID/max)
-
+			//userMessageBase := NewUserMessageBase(SetUserMessageTypes(2), SetBaseMessage(*groupUser))
+			//info := NewInfo()
+			//err := info.WriteKafka(userMessageBase, userMessageBase.SetTopic(groupUser.UserID), groupUser.UserID)
+			//if err != nil {
+			//	return nil, 1
+			//}
+			msg := GroupChangeMessage[user.Id]
+			*msg <- groupUser.GroupID
 			return *groupUser, 0
 		} else {
 			return nil, 0

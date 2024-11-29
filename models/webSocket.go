@@ -11,11 +11,14 @@ import (
 )
 
 type WebSocketClient struct {
-	Conn        *websocket.Conn
-	Context     *gin.Context
-	FromId      uint `json:"from_id"`
-	messageList chan []byte
+	Conn               *websocket.Conn
+	Context            *gin.Context
+	FromId             uint `json:"from_id"`
+	messageList        chan []byte
+	GroupChangeMessage chan uint //用户群聊发生变化，如用户加入新群聊
 }
+
+var GroupChangeMessage = make(map[uint]*chan uint)
 
 // NewWebSocketClient 创建一个新的webSocket连接
 func NewWebSocketClient(c *gin.Context, check bool, userId uint) (*WebSocketClient, error) {
@@ -30,6 +33,8 @@ func NewWebSocketClient(c *gin.Context, check bool, userId uint) (*WebSocketClie
 	ws.FromId = userId
 	ws.Context = c
 	ws.messageList = make(chan []byte, 50)
+	ws.GroupChangeMessage = make(chan uint, 3)
+	GroupChangeMessage[ws.FromId] = &ws.GroupChangeMessage
 	return ws, err
 }
 

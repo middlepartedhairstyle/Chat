@@ -29,6 +29,7 @@ const (
 	ChangeUserName          = "cun"
 	ChangeUserPassword      = "cup"
 	ChangeUserEmail         = "cue"
+	DeleteUser              = "du"
 )
 
 func Routers(router *gin.Engine) {
@@ -44,6 +45,7 @@ func Routers(router *gin.Engine) {
 	router.POST("/changeUserName", middleware.RateLimiter(ChangeUserName), middleware.CheckToken, httpServer.ChangeUserName)
 	router.POST("/changeUserPassword", middleware.RateLimiter(ChangeUserPassword), middleware.CheckToken, httpServer.ChangeUserPassword)
 	router.POST("/changeUserEmail", middleware.RateLimiter(ChangeUserEmail), middleware.CheckToken, httpServer.ChangeUserEmail)
+	router.POST("/deleteUser", middleware.RateLimiter(DeleteUser), middleware.CheckToken, httpServer.DeleteUser)
 	//用户详细信息
 	router.POST("/changeUserProfilePhoto", middleware.RateLimiter(ChangeUserProfilePhoto), middleware.LimitSizeMiddleware(1<<20), httpServer.ChangeUserProfilePhoto)
 	router.GET("getUserProfilePhoto", middleware.RateLimiter(GetUserProfilePhoto), httpServer.GetUserProfilePhoto)
