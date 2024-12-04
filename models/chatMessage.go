@@ -280,10 +280,12 @@ func (userMessage *UserChatMessage) JudgeGroupUser(infoVerify map[string]uint) b
 // GetFriendMessage 获取好友发送的消息
 func (userMessage *UserChatMessage) GetFriendMessage(id uint, ws *WebSocketClient) {
 	defer func() {
+		fmt.Println("close get friend message")
 		if r := recover(); r != nil {
 			fmt.Println("Recovering from panic in GetMessage:", r)
 		}
 	}()
+
 	var message []byte // 消息
 	var tpId = id/maxFriendNum + 1
 	topic := fmt.Sprintf("%s%s%d", ChatWithFriend, "tp", tpId) // 例如 ftp1, ftp2
@@ -295,18 +297,22 @@ func (userMessage *UserChatMessage) GetFriendMessage(id uint, ws *WebSocketClien
 		}
 	}(consumer) // 确保消费者关闭
 
-	for {
-		m, err := consumer.ReadMessage(context.Background())
-		if err != nil {
-			fmt.Println("Error reading message:", err)
-			continue
-		}
-		if string(m.Key) == ChatWithFriend+strconv.Itoa(int(id)) {
-			message = m.Value
-			ws.messageList <- message
-		} else {
-			if err = consumer.CommitMessages(context.Background(), m); err != nil {
-				fmt.Printf("提交偏移量失败: %v\n", err)
+	for ws.Ping() {
+		select {
+		case <-ws.Ctx.Done():
+			return
+		default:
+			m, err := consumer.ReadMessage(ws.Ctx)
+			if err != nil {
+				continue
+			}
+			if string(m.Key) == ChatWithFriend+strconv.Itoa(int(id)) {
+				message = m.Value
+				ws.messageList <- message
+			} else {
+				if err = consumer.CommitMessages(context.Background(), m); err != nil {
+					continue
+				}
 			}
 		}
 	}
@@ -337,27 +343,32 @@ func (userMessage *UserChatMessage) GetGroupMessage(id uint, ws *WebSocketClient
 			consumer := Kafka.NewConsumer(Kafka.SetConsumerTopic(topic), Kafka.SetConsumerGroupID(topic+ChatGroupUser+strconv.Itoa(int(id)))) //消费者的id，gtp1gu1,gtp2gu1(后期更改为GroupUserID)
 			defer func(consumer *kafka.Reader) {
 				err := consumer.Close()
+				fmt.Println("close get group message")
 				if err != nil {
-					fmt.Println("Error reading message:", err)
+					return
 				}
 			}(consumer) // 确保消费者关闭
-			for {
-				m, err := consumer.ReadMessage(context.Background())
-				if err != nil {
-					fmt.Println("Error reading message:", err)
-					continue
-				}
-				var gKey = string(m.Key)
-
-				//消息匹配
-				for index, key := range groups {
-					if gKey == ChatWithGroup+strconv.Itoa(int(key)) {
-						ws.messageList <- m.Value
-						break
+			for ws.Ping() {
+				select {
+				case <-ws.Ctx.Done():
+					return
+				default:
+					m, err := consumer.ReadMessage(ws.Ctx)
+					if err != nil {
+						continue
 					}
-					if index == len(groups)-1 {
-						if err = consumer.CommitMessages(context.Background(), m); err != nil {
-							fmt.Printf("提交偏移量失败: %v\n", err)
+					var gKey = string(m.Key)
+
+					//消息匹配
+					for index, key := range groups {
+						if gKey == ChatWithGroup+strconv.Itoa(int(key)) {
+							ws.messageList <- m.Value
+							break
+						}
+						if index == len(groups)-1 {
+							if err = consumer.CommitMessages(context.Background(), m); err != nil {
+								fmt.Printf("提交偏移量失败: %v\n", err)
+							}
 						}
 					}
 				}
@@ -370,6 +381,9 @@ func (userMessage *UserChatMessage) GetGroupMessage(id uint, ws *WebSocketClient
 		case gid := <-ws.GroupChangeMessage:
 			userMessage.ChangeGroupMessage(gid, id, ws)
 		default:
+			if ws.Ping() {
+				return
+			}
 		}
 	}
 }
@@ -394,19 +408,24 @@ func (userMessage *UserChatMessage) ChangeGroupMessage(groupID uint, id uint, ws
 				fmt.Println("Error reading message:", err)
 			}
 		}(consumer) // 确保消费者关闭
-		for {
-			m, err := consumer.ReadMessage(context.Background())
-			if err != nil {
-				fmt.Println("Error reading message:", err)
-				continue
-			}
-			var gKey = string(m.Key)
-			//消息匹配
-			if gKey == ChatWithGroup+strconv.Itoa(int(groupID)) {
-				ws.messageList <- m.Value
-			} else {
-				if err = consumer.CommitMessages(context.Background(), m); err != nil {
-					fmt.Printf("提交偏移量失败: %v\n", err)
+		for ws.Ping() {
+			select {
+			case <-ws.Ctx.Done():
+				return
+			default:
+				m, err := consumer.ReadMessage(ws.Ctx)
+				if err != nil {
+					fmt.Println("Error reading message:", err)
+					continue
+				}
+				var gKey = string(m.Key)
+				//消息匹配
+				if gKey == ChatWithGroup+strconv.Itoa(int(groupID)) {
+					ws.messageList <- m.Value
+				} else {
+					if err = consumer.CommitMessages(context.Background(), m); err != nil {
+						fmt.Printf("提交偏移量失败: %v\n", err)
+					}
 				}
 			}
 		}

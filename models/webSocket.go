@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -13,6 +14,9 @@ import (
 type WebSocketClient struct {
 	Conn               *websocket.Conn
 	Context            *gin.Context
+	Ctx                context.Context
+	PingTicker         *time.Ticker
+	ConnState          bool //连接状态
 	FromId             uint `json:"from_id"`
 	messageList        chan []byte
 	GroupChangeMessage chan uint //用户群聊发生变化，如用户加入新群聊
@@ -32,6 +36,8 @@ func NewWebSocketClient(c *gin.Context, check bool, userId uint) (*WebSocketClie
 	ws.Conn, err = upGrader.Upgrade(c.Writer, c.Request, nil)
 	ws.FromId = userId
 	ws.Context = c
+	ws.PingTicker = time.NewTicker(30 * time.Second) //设置ping时间间隔为30秒
+	ws.ConnState = true
 	ws.messageList = make(chan []byte, 50)
 	ws.GroupChangeMessage = make(chan uint, 3)
 	GroupChangeMessage[ws.FromId] = &ws.GroupChangeMessage
@@ -40,7 +46,21 @@ func NewWebSocketClient(c *gin.Context, check bool, userId uint) (*WebSocketClie
 
 // Close 关闭连接
 func (ws *WebSocketClient) Close() error {
-	return ws.Conn.Close()
+	ws.PingTicker.Stop()
+	err := ws.Conn.Close()
+	ws.ConnState = false
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+func (ws *WebSocketClient) Ping() bool {
+	return ws.ConnState
+}
+
+func (ws *WebSocketClient) SetConnState(state bool) {
+	ws.ConnState = state
 }
 
 // ReadMessage 读取消息
@@ -68,7 +88,7 @@ func (ws *WebSocketClient) WriteMessage(messageType int, message []byte) error {
 	return nil
 }
 
-// SendMessage 发送消息
+// SendMessage 发送消息(待完善，连接断开后关闭所有producers连接)
 func (ws *WebSocketClient) SendMessage(fromId uint) {
 	var producers = make(map[string]*Kafka.Producer) //[topic]*Producer
 	var infoVerify = make(map[string]uint)           //例如[f1]2,[g]2
@@ -80,6 +100,7 @@ func (ws *WebSocketClient) SendMessage(fromId uint) {
 			if err != nil {
 				return
 			}
+			fmt.Println("close ")
 			break
 		}
 		//查看消息类型格式是否正确
@@ -94,6 +115,15 @@ func (ws *WebSocketClient) SendMessage(fromId uint) {
 
 // GetMessage 获取消息
 func (ws *WebSocketClient) GetMessage(id uint) {
+	defer func() {
+		ws.Close()
+		fmt.Println("close get message")
+	}()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() // 确保上下文取消，释放相关资源
+	ws.Ctx = ctx
+
 	//从kafka中读取新消息
 	userChatMessage := NewUserChatMessage()
 	info := NewInfo()
@@ -102,13 +132,21 @@ func (ws *WebSocketClient) GetMessage(id uint) {
 	go info.ReadKafka(id, ws)
 
 	// 消息写入 websocket
-	for {
+	for ws.Ping() {
 		select {
 		case msg := <-ws.messageList:
 			err := ws.WriteMessage(websocket.TextMessage, msg)
 			if err != nil {
 				fmt.Println("Error writing message to websocket:", err)
 				continue
+			}
+		case <-ws.PingTicker.C:
+			fmt.Println("test1")
+			err := ws.Conn.WriteMessage(websocket.PingMessage, []byte{})
+			if err != nil {
+				fmt.Println("Error writing ping message to websocket:", err)
+				ws.SetConnState(false)
+				return
 			}
 		default:
 		}

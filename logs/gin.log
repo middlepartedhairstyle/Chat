@@ -29,7 +29,4 @@
 [GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
 Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
 [GIN-debug] Listening and serving HTTP on 127.0.0.1:8080
-[GIN] 2024/11/30 - 00:27:37 | 200 |    7.0180923s |       127.0.0.1 | GET      "/chat?user_id=1"
-[GIN] 2024/11/30 - 00:27:46 | 200 |    1.1702161s |       127.0.0.1 | GET      "/chat?user_id=2"
-[GIN] 2024/11/30 - 00:27:56 | 200 |    1.2154697s |       127.0.0.1 | GET      "/chat?user_id=6"
-[GIN] 2024/11/30 - 00:28:46 | 200 |    1.4712813s |       127.0.0.1 | POST     "/addGroup?group_id=5"
+[GIN] 2024/12/04 - 22:07:23 | 200 |     1.443829s |       127.0.0.1 | GET      "/chat?user_id=1"

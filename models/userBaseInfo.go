@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"github.com/middlepartedhairstyle/HiWe/mySQL/tables"
 	"github.com/middlepartedhairstyle/HiWe/redis"
 	"github.com/middlepartedhairstyle/HiWe/utils"
@@ -161,6 +162,8 @@ func (user *UserBaseInfo) ChangePassword() bool {
 	u.ID = user.Id
 	u.Sale = utils.RandString()
 	u.Password = utils.MakePasswordSha256(user.Password, u.Sale)
+	u.UseIDFindEmail()
+	fmt.Println(u.Email)
 	u.Token = utils.MakeToken(user.Email, user.Password, utils.RandString())
 	if u.ChangePassword() {
 		redis.UpdateToken(u.ID, u.Token)

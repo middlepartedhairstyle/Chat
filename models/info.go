@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	Kafka "github.com/middlepartedhairstyle/HiWe/kafka"
+	"github.com/segmentio/kafka-go"
 	"strconv"
 )
 
@@ -66,6 +67,13 @@ func (info *Info) WriteKafka(disposeInfo DisposeInfo, args ...interface{}) error
 		if err != nil {
 			fmt.Println(err)
 		}
+
+		defer func(producer *Kafka.Producer) {
+			err := producer.Client.Close()
+			if err != nil {
+				return
+			}
+		}(producer)
 		return nil
 	}
 	return errors.New("marshal error")
@@ -83,19 +91,30 @@ func (info *Info) ReadKafka(userID uint, ws *WebSocketClient) {
 	}
 
 	consumer := Kafka.NewConsumer(Kafka.SetConsumerTopic(topic), Kafka.SetConsumerGroupID(UserMessageBaseGroup+strconv.Itoa(int(userID))))
-	for {
-		message, err := consumer.ReadMessage(context.Background())
-		if err != nil {
-			continue
-		}
-		if string(message.Key) == key {
-			ws.messageList <- message.Value
-		} else {
-			if err = consumer.CommitMessages(context.Background(), message); err != nil {
-				fmt.Printf("提交偏移量失败: %v\n", err)
+	defer func(consumer *kafka.Reader, producer *Kafka.Producer) {
+		consumer.Close()
+		producer.Client.Close()
+	}(consumer, producer)
+
+	for ws.Ping() {
+		select {
+		case <-ws.Ctx.Done():
+			return
+		default:
+			message, err := consumer.ReadMessage(context.Background())
+			if err != nil {
+				continue
+			}
+			if string(message.Key) == key {
+				ws.messageList <- message.Value
+			} else {
+				if err = consumer.CommitMessages(context.Background(), message); err != nil {
+					fmt.Printf("提交偏移量失败: %v\n", err)
+				}
 			}
 		}
 	}
+
 }
 
 func (info *Info) Marshal() ([]byte, error) {
