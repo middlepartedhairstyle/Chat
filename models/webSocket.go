@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	Kafka "github.com/middlepartedhairstyle/HiWe/kafka"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -15,6 +16,8 @@ type WebSocketClient struct {
 	Conn               *websocket.Conn
 	Context            *gin.Context
 	Ctx                context.Context
+	Mu                 *sync.Mutex
+	Cancel             context.CancelFunc
 	PingTicker         *time.Ticker
 	ConnState          bool //连接状态
 	FromId             uint `json:"from_id"`
@@ -38,6 +41,8 @@ func NewWebSocketClient(c *gin.Context, check bool, userId uint) (*WebSocketClie
 	ws.Context = c
 	ws.PingTicker = time.NewTicker(30 * time.Second) //设置ping时间间隔为30秒
 	ws.ConnState = true
+	ws.Ctx, ws.Cancel = context.WithCancel(context.Background())
+	ws.Mu = new(sync.Mutex)
 	ws.messageList = make(chan []byte, 50)
 	ws.GroupChangeMessage = make(chan uint, 3)
 	GroupChangeMessage[ws.FromId] = &ws.GroupChangeMessage
@@ -49,6 +54,7 @@ func (ws *WebSocketClient) Close() error {
 	ws.PingTicker.Stop()
 	err := ws.Conn.Close()
 	ws.ConnState = false
+	ws.Cancel()
 	if err != nil {
 		return err
 	}
@@ -116,13 +122,9 @@ func (ws *WebSocketClient) SendMessage(fromId uint) {
 // GetMessage 获取消息
 func (ws *WebSocketClient) GetMessage(id uint) {
 	defer func() {
-		ws.Close()
+		_ = ws.Close()
 		fmt.Println("close get message")
 	}()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // 确保上下文取消，释放相关资源
-	ws.Ctx = ctx
 
 	//从kafka中读取新消息
 	userChatMessage := NewUserChatMessage()
@@ -148,7 +150,6 @@ func (ws *WebSocketClient) GetMessage(id uint) {
 				ws.SetConnState(false)
 				return
 			}
-		default:
 		}
 	}
 }

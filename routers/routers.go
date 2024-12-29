@@ -30,6 +30,7 @@ const (
 	ChangeUserPassword      = "cup"
 	ChangeUserEmail         = "cue"
 	DeleteUser              = "du"
+	ChangeFriendNote        = "cfn"
 )
 
 func Routers(router *gin.Engine) {
@@ -54,6 +55,7 @@ func Routers(router *gin.Engine) {
 	router.GET("getRequestAddFriendList", middleware.RateLimiter(getRequestAddFriendList), middleware.CheckToken, httpServer.GetRequestFriendList)
 	router.POST("requestAddFriend", middleware.RateLimiter(requestAddFriend), middleware.CheckToken, httpServer.RequestAddFriend)
 	router.POST("disposeAddFriend", middleware.RateLimiter(disposeAddFriend), middleware.CheckToken, httpServer.DisposeAddFriend)
+	router.POST("changeFriendNote", middleware.RateLimiter(ChangeFriendNote), middleware.CheckToken, httpServer.ChangeFriendNote)
 	//用户群功能
 	router.POST("createGroup", middleware.RateLimiter(createGroup), middleware.CheckToken, httpServer.CreateGroup)
 	router.POST("addGroup", middleware.RateLimiter(addGroup), middleware.CheckToken, httpServer.AddGroup)

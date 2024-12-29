@@ -10,6 +10,7 @@ import (
 const (
 	AlreadyFriend        = 21101 //已经是好友
 	DisposeAddFriendFail = 21102 //处理好友请求失败
+	ChangeFriendNoteFail = 21103 //更改好友备注错误
 )
 
 // GetFriendList 获取好友列表
@@ -89,6 +90,24 @@ func (h *HTTPServer) DisposeAddFriend(c *gin.Context) {
 			"to_id":   friend.UserTwoID,
 		})
 	}
+}
+
+func (h *HTTPServer) ChangeFriendNote(c *gin.Context) {
+	var user models.UserBaseInfo
+	friendID, _ := utils.StringToUint(c.Query("friend_id"))
+	note := c.Query("note")
+	user.Id, _ = utils.StringToUint(c.GetHeader("id"))
+	if user.ChangeFriendNote(friendID, note) {
+		utils.Success(c, SUCCESS, gin.H{
+			"friend_id": friendID,
+			"note":      note,
+		})
+	} else {
+		utils.Fail(c, ChangeFriendNoteFail, gin.H{
+			"err": "error",
+		})
+	}
+
 }
 
 // DeleteFriend 删除好友

@@ -76,7 +76,6 @@ func (userMessage *UserChatMessage) SetTopic(topic uint) string {
 	case MediaFriend:
 		var tpId = topic/maxFriendNum + 1
 		return fmt.Sprintf("%s%s%d", ChatWithFriend, "tp", tpId) //例如ftp1,ftp2
-		//return "test"
 	case MediaGroup:
 		var tpId = topic/maxGroupNum + 1
 		return fmt.Sprintf("%s%s%d", ChatWithGroup, "tp", tpId) //例如gtp1,gtp2

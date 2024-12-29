@@ -92,8 +92,8 @@ func (info *Info) ReadKafka(userID uint, ws *WebSocketClient) {
 
 	consumer := Kafka.NewConsumer(Kafka.SetConsumerTopic(topic), Kafka.SetConsumerGroupID(UserMessageBaseGroup+strconv.Itoa(int(userID))))
 	defer func(consumer *kafka.Reader, producer *Kafka.Producer) {
-		consumer.Close()
-		producer.Client.Close()
+		_ = consumer.Close()
+		_ = producer.Client.Close()
 	}(consumer, producer)
 
 	for ws.Ping() {

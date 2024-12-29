@@ -10,8 +10,8 @@ type Friends struct {
 	UserOneID    uint   `gorm:"type:int(11);not null;index:idx_friends,unique"` //用户一id
 	UserTwoID    uint   `gorm:"type:int(11);not null;index:idx_friends,unique"` //用户二id
 	Relationship string `gorm:"type:varchar(10)"`                               //两者关系
-	NoteOne      string `gorm:"type:varchar(20)"`                               //UserOne个UserTwo的备注
-	NoteTwo      string `gorm:"type:varchar(20)"`                               //UserTwo个UserOne的备注
+	NoteOne      string `gorm:"type:varchar(20)"`                               //UserOne给UserTwo的备注
+	NoteTwo      string `gorm:"type:varchar(20)"`                               //UserTwo给UserOne的备注
 }
 
 type FriendOpt func(*Friends)
@@ -133,4 +133,22 @@ func (friend *Friends) FindTwoUserID() bool {
 		return false
 	}
 	return true
+}
+
+// ChangeNote 修改好友备注
+func (friend *Friends) ChangeNote(userID uint, note string) bool {
+	var count int64
+	err := mySQL.DB.Table(mySQL.FriendT).Where("id = ?", friend.ID).Count(&count).Error
+	if err != nil {
+		return false
+	}
+	if count > 0 {
+		err = mySQL.DB.Table(mySQL.FriendT).Where("id = ? and user_one_id = ?", friend.ID, userID).UpdateColumn("note_two", note).Error
+		err = mySQL.DB.Table(mySQL.FriendT).Where("id = ? and user_two_id = ?", friend.ID, userID).UpdateColumn("note_one", note).Error
+		if err != nil {
+			return false
+		}
+		return true
+	}
+	return false
 }

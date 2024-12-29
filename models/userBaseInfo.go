@@ -259,6 +259,12 @@ func (user *UserBaseInfo) DisposeAddFriend(f tables.Friends, requestId uint, sta
 	}
 }
 
+// ChangeFriendNote 更改好友备注
+func (user *UserBaseInfo) ChangeFriendNote(friendID uint, note string) bool {
+	var friend = tables.NewFriend(tables.SetFriendID(friendID))
+	return friend.ChangeNote(user.Id, note)
+}
+
 // DeleteFriend 删除好友(待完善)
 func (user *UserBaseInfo) DeleteFriend() bool { return false }
 

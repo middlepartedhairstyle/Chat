@@ -19,6 +19,7 @@
 [GIN-debug] GET    /getRequestAddFriendList  --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).GetRequestFriendList-fm (5 handlers)
 [GIN-debug] POST   /requestAddFriend         --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).RequestAddFriend-fm (5 handlers)
 [GIN-debug] POST   /disposeAddFriend         --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).DisposeAddFriend-fm (5 handlers)
+[GIN-debug] POST   /changeFriendNote         --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).ChangeFriendNote-fm (5 handlers)
 [GIN-debug] POST   /createGroup              --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).CreateGroup-fm (5 handlers)
 [GIN-debug] POST   /addGroup                 --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).AddGroup-fm (5 handlers)
 [GIN-debug] POST   /disposeAddGroup          --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).DisposeAddGroup-fm (5 handlers)
@@ -29,4 +30,15 @@
 [GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
 Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
 [GIN-debug] Listening and serving HTTP on 127.0.0.1:8080
-[GIN] 2024/12/04 - 22:07:23 | 200 |     1.443829s |       127.0.0.1 | GET      "/chat?user_id=1"
+[GIN] 2024/12/29 - 22:31:12 | 200 |    2.0613184s |       127.0.0.1 | POST     "/register"
+[GIN] 2024/12/29 - 22:31:35 | 200 |     834.588ms |       127.0.0.1 | POST     "/sendCode"
+[GIN] 2024/12/29 - 22:32:52 | 200 |     3.730926s |       127.0.0.1 | POST     "/register"
+[GIN] 2024/12/29 - 22:33:33 | 200 |    1.7409005s |       127.0.0.1 | POST     "/emailLogin"
+[GIN] 2024/12/29 - 22:35:53 | 200 |    2.3929325s |       127.0.0.1 | GET      "/chat?user_id=2"
+[GIN] 2024/12/29 - 22:38:30 | 200 |    3.1756991s |       127.0.0.1 | POST     "/emailLogin"
+[GIN] 2024/12/29 - 22:39:37 | 200 |    2.7565305s |       127.0.0.1 | POST     "/emailLogin"
+[GIN] 2024/12/29 - 22:40:10 | 200 |    1.3867091s |       127.0.0.1 | GET      "/chat?user_id=2"
+[GIN] 2024/12/29 - 22:40:34 | 200 |    1.6626166s |       127.0.0.1 | POST     "/emailLogin"
+[GIN] 2024/12/29 - 22:40:57 | 404 |            0s |       127.0.0.1 | GET      "/ChatWithFriend?user_id=4"
+[GIN] 2024/12/29 - 22:41:29 | 200 |    1.4126237s |       127.0.0.1 | GET      "/chat?user_id=4"
+[GIN] 2024/12/29 - 22:48:07 | 200 |    3.0981969s |       127.0.0.1 | GET      "/chat?user_id=1"
