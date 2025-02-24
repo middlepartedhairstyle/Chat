@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/middlepartedhairstyle/HiWe/redis"
-	"net/http"
+	"github.com/middlepartedhairstyle/HiWe/utils"
 	"time"
 )
 
@@ -26,7 +26,7 @@ func RateLimiter(router string) gin.HandlerFunc {
 			// 使用 Redis 的 INCR 命令增加请求计数
 			count, err := redis.Rdb.Incr(ctx, key).Result()
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "内部服务器错误"})
+				utils.Fail(c, ServerError, gin.H{"error": "内部服务器错误"})
 				c.Abort()
 				return
 			}
@@ -36,7 +36,8 @@ func RateLimiter(router string) gin.HandlerFunc {
 			}
 
 			if count > maxRequestsOfIP {
-				c.JSON(http.StatusTooManyRequests, gin.H{"error": "请求过于频繁，请稍后再试"})
+				time.Sleep(3 * time.Second) //对于异常用户进行延迟处理
+				utils.Fail(c, RequestsTooFrequent, gin.H{"error": "请求过于频繁，请稍后再试"})
 				c.Abort()
 				return
 			}
@@ -48,7 +49,7 @@ func RateLimiter(router string) gin.HandlerFunc {
 			count1, err1 := redis.Rdb.Incr(ctx, key1).Result()
 			count2, err2 := redis.Rdb.Incr(ctx, key2).Result()
 			if err1 != nil || err2 != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "内部服务器错误"})
+				utils.Fail(c, ServerError, gin.H{"error": "内部服务器错误"})
 				c.Abort()
 				return
 			}
@@ -61,7 +62,8 @@ func RateLimiter(router string) gin.HandlerFunc {
 			}
 
 			if count1 > maxRequestsOfIP && count2 > maxRequestsOfUser {
-				c.JSON(http.StatusTooManyRequests, gin.H{"error": "请求过于频繁，请稍后再试"})
+				time.Sleep(3 * time.Second) //对于异常用户进行延迟处理
+				utils.Fail(c, RequestsTooFrequent, gin.H{"error": "请求过于频繁，请稍后再试"})
 				c.Abort()
 				return
 			}

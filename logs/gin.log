@@ -4,23 +4,41 @@
  - using env:	export GIN_MODE=release
  - using code:	gin.SetMode(gin.ReleaseMode)
 
-[GIN-debug] POST   /register                 --> github.com/middlepartedhairstyle/HiWe/service.Register (4 handlers)
-[GIN-debug] POST   /emailLogin               --> github.com/middlepartedhairstyle/HiWe/service.PassWordLogin (5 handlers)
-[GIN-debug] POST   /codeLogin                --> github.com/middlepartedhairstyle/HiWe/service.CodeLogin (5 handlers)
-[GIN-debug] POST   /sendCode                 --> github.com/middlepartedhairstyle/HiWe/service.SendCode (4 handlers)
-[GIN-debug] POST   /verifyCode               --> github.com/middlepartedhairstyle/HiWe/service.VerifyCode (4 handlers)
-[GIN-debug] GET    /getFriendList            --> github.com/middlepartedhairstyle/HiWe/service.GetFriendList (5 handlers)
-[GIN-debug] GET    /getRequestAddFriendList  --> github.com/middlepartedhairstyle/HiWe/service.GetRequestFriendList (5 handlers)
-[GIN-debug] POST   /requestAddFriend         --> github.com/middlepartedhairstyle/HiWe/service.RequestAddFriend (5 handlers)
-[GIN-debug] POST   /disposeAddFriend         --> github.com/middlepartedhairstyle/HiWe/service.DisposeAddFriend (5 handlers)
-[GIN-debug] POST   /createGroup              --> github.com/middlepartedhairstyle/HiWe/service.CreateGroup (5 handlers)
-[GIN-debug] POST   /addGroup                 --> github.com/middlepartedhairstyle/HiWe/service.AddGroup (5 handlers)
-[GIN-debug] POST   /disposeAddGroup          --> github.com/middlepartedhairstyle/HiWe/service.DisposeAddGroup (5 handlers)
-[GIN-debug] GET    /findAllCreateGroup       --> github.com/middlepartedhairstyle/HiWe/service.GetCreateGroupList (5 handlers)
-[GIN-debug] GET    /findAllGroup             --> github.com/middlepartedhairstyle/HiWe/service.GetAllGroupList (5 handlers)
-[GIN-debug] GET    /findGroup                --> github.com/middlepartedhairstyle/HiWe/service.FindGroup (5 handlers)
-[GIN-debug] GET    /ChatWithFriend           --> github.com/middlepartedhairstyle/HiWe/service.Chat (4 handlers)
+[GIN-debug] POST   /register                 --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).Register-fm (4 handlers)
+[GIN-debug] POST   /emailLogin               --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).PassWordLogin-fm (5 handlers)
+[GIN-debug] POST   /codeLogin                --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).CodeLogin-fm (5 handlers)
+[GIN-debug] POST   /sendCode                 --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).SendCode-fm (4 handlers)
+[GIN-debug] POST   /verifyCode               --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).VerifyCode-fm (4 handlers)
+[GIN-debug] POST   /changeUserName           --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).ChangeUserName-fm (5 handlers)
+[GIN-debug] POST   /changeUserPassword       --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).ChangeUserPassword-fm (5 handlers)
+[GIN-debug] POST   /changeUserEmail          --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).ChangeUserEmail-fm (5 handlers)
+[GIN-debug] POST   /deleteUser               --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).DeleteUser-fm (5 handlers)
+[GIN-debug] POST   /changeUserProfilePhoto   --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).ChangeUserProfilePhoto-fm (5 handlers)
+[GIN-debug] GET    /getUserProfilePhoto      --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).GetUserProfilePhoto-fm (4 handlers)
+[GIN-debug] GET    /getFriendList            --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).GetFriendList-fm (5 handlers)
+[GIN-debug] GET    /getRequestAddFriendList  --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).GetRequestFriendList-fm (5 handlers)
+[GIN-debug] POST   /requestAddFriend         --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).RequestAddFriend-fm (5 handlers)
+[GIN-debug] POST   /disposeAddFriend         --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).DisposeAddFriend-fm (5 handlers)
+[GIN-debug] POST   /changeFriendNote         --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).ChangeFriendNote-fm (5 handlers)
+[GIN-debug] POST   /createGroup              --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).CreateGroup-fm (5 handlers)
+[GIN-debug] POST   /addGroup                 --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).AddGroup-fm (5 handlers)
+[GIN-debug] POST   /disposeAddGroup          --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).DisposeAddGroup-fm (5 handlers)
+[GIN-debug] GET    /findAllCreateGroup       --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).GetCreateGroupList-fm (5 handlers)
+[GIN-debug] GET    /findAllGroup             --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).GetAllGroupList-fm (5 handlers)
+[GIN-debug] GET    /findGroup                --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).FindGroup-fm (5 handlers)
+[GIN-debug] GET    /chat                     --> github.com/middlepartedhairstyle/HiWe/service.(*HTTPServer).Chat-fm (5 handlers)
 [GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
 Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
 [GIN-debug] Listening and serving HTTP on 127.0.0.1:8080
-[GIN] 2024/11/06 - 17:25:22 | 200 |    418.8101ms |       127.0.0.1 | GET      "/ChatWithFriend?user_id=4"
+[GIN] 2024/12/29 - 22:31:12 | 200 |    2.0613184s |       127.0.0.1 | POST     "/register"
+[GIN] 2024/12/29 - 22:31:35 | 200 |     834.588ms |       127.0.0.1 | POST     "/sendCode"
+[GIN] 2024/12/29 - 22:32:52 | 200 |     3.730926s |       127.0.0.1 | POST     "/register"
+[GIN] 2024/12/29 - 22:33:33 | 200 |    1.7409005s |       127.0.0.1 | POST     "/emailLogin"
+[GIN] 2024/12/29 - 22:35:53 | 200 |    2.3929325s |       127.0.0.1 | GET      "/chat?user_id=2"
+[GIN] 2024/12/29 - 22:38:30 | 200 |    3.1756991s |       127.0.0.1 | POST     "/emailLogin"
+[GIN] 2024/12/29 - 22:39:37 | 200 |    2.7565305s |       127.0.0.1 | POST     "/emailLogin"
+[GIN] 2024/12/29 - 22:40:10 | 200 |    1.3867091s |       127.0.0.1 | GET      "/chat?user_id=2"
+[GIN] 2024/12/29 - 22:40:34 | 200 |    1.6626166s |       127.0.0.1 | POST     "/emailLogin"
+[GIN] 2024/12/29 - 22:40:57 | 404 |            0s |       127.0.0.1 | GET      "/ChatWithFriend?user_id=4"
+[GIN] 2024/12/29 - 22:41:29 | 200 |    1.4126237s |       127.0.0.1 | GET      "/chat?user_id=4"
+[GIN] 2024/12/29 - 22:48:07 | 200 |    3.0981969s |       127.0.0.1 | GET      "/chat?user_id=1"

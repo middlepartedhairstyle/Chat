@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const maxTokenTime = 240 * time.Hour
+const maxTokenTime = 720 * time.Hour //设置token过期时间为30天
 
 var ctx = context.Background()
 
@@ -30,4 +30,12 @@ func CheckToken(id uint, token string) bool {
 		return true
 	}
 	return false
+}
+
+func DeleteToken(id uint) bool {
+	err := Rdb.Del(ctx, "token"+strconv.Itoa(int(id))).Err()
+	if err != nil {
+		return false
+	}
+	return true
 }

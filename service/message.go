@@ -7,7 +7,7 @@ import (
 )
 
 // Chat 聊天
-func Chat(c *gin.Context) {
+func (h *HTTPServer) Chat(c *gin.Context) {
 	userId, _ := utils.StringToUint(c.Query("user_id"))
 	client, err := models.NewWebSocketClient(c, true, userId)
 	if err != nil {

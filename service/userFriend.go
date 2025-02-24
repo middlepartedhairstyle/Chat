@@ -3,37 +3,47 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/middlepartedhairstyle/HiWe/models"
-	"github.com/middlepartedhairstyle/HiWe/mySQL"
+	"github.com/middlepartedhairstyle/HiWe/mySQL/tables"
 	"github.com/middlepartedhairstyle/HiWe/utils"
 )
 
+const (
+	AlreadyFriend        = 21101 //已经是好友
+	DisposeAddFriendFail = 21102 //处理好友请求失败
+	ChangeFriendNoteFail = 21103 //更改好友备注错误
+)
+
 // GetFriendList 获取好友列表
-func GetFriendList(c *gin.Context) {
+func (h *HTTPServer) GetFriendList(c *gin.Context) {
 	var user models.UserBaseInfo
 	//获取用户数据
 	user.Id, _ = utils.StringToUint(c.Query("id"))
 	//查询用户好友列表
-	var friendList []mySQL.Friends //存放列表数据
+	var friendList []tables.Friends //存放列表数据
 	friendList, _ = user.GetFriendList()
-	utils.Success(c, "成功", friendList)
+	utils.Success(c, SUCCESS, friendList)
 }
 
 // GetRequestFriendList 获取好友请求添加列表(用于首次登录)
-func GetRequestFriendList(c *gin.Context) {
+func (h *HTTPServer) GetRequestFriendList(c *gin.Context) {
 	var user models.UserBaseInfo
-	var friendList []mySQL.RequestFriend
+	var friendList []tables.RequestFriend
 	var b bool
 	user.Id, _ = utils.StringToUint(c.Query("id"))
 	friendList, b = user.GetRequestFriendList()
 	if b {
-		utils.Success(c, "成功", friendList)
+		utils.Success(c, SUCCESS, gin.H{
+			"friend_list": friendList,
+		})
 	} else {
-		utils.Fail(c, "失败", friendList)
+		utils.Fail(c, ServerError, gin.H{
+			"friend_list": friendList,
+		})
 	}
 }
 
-// RequestAddFriend 添加好友
-func RequestAddFriend(c *gin.Context) {
+// RequestAddFriend 请求添加好友
+func (h *HTTPServer) RequestAddFriend(c *gin.Context) {
 	var user models.UserBaseInfo
 	var fromId uint
 	var toId uint
@@ -42,12 +52,12 @@ func RequestAddFriend(c *gin.Context) {
 	user.Id = fromId
 	err := user.RequestAddFriend(fromId, toId)
 	if err {
-		utils.Success(c, "成功", gin.H{
+		utils.Success(c, SUCCESS, gin.H{
 			"from_id": fromId,
 			"to_id":   toId,
 		})
 	} else {
-		utils.Fail(c, "失败", gin.H{
+		utils.Fail(c, AlreadyFriend, gin.H{
 			"from_id": fromId,
 			"to_id":   toId,
 		})
@@ -55,9 +65,9 @@ func RequestAddFriend(c *gin.Context) {
 }
 
 // DisposeAddFriend 处理好友请求
-func DisposeAddFriend(c *gin.Context) {
+func (h *HTTPServer) DisposeAddFriend(c *gin.Context) {
 	var user models.UserBaseInfo
-	var friend mySQL.Friends
+	var friend tables.Friends
 	var requestId uint
 	var state uint8
 	friend.UserOneID, _ = utils.StringToUint(c.Query("from_id"))
@@ -68,17 +78,36 @@ func DisposeAddFriend(c *gin.Context) {
 
 	b, s := user.DisposeAddFriend(friend, requestId, state)
 	if b {
-		utils.Success(c, "成功", gin.H{
+		utils.Success(c, SUCCESS, gin.H{
 			"state":   s,
 			"from_id": friend.UserOneID,
 			"to_id":   friend.UserTwoID,
 		})
 	} else {
-		utils.Fail(c, "失败", gin.H{
-			"state": s,
-			"id":    friend.UserTwoID,
+		utils.Fail(c, DisposeAddFriendFail, gin.H{
+			"state":   s,
+			"from_id": friend.UserOneID,
+			"to_id":   friend.UserTwoID,
 		})
 	}
+}
+
+func (h *HTTPServer) ChangeFriendNote(c *gin.Context) {
+	var user models.UserBaseInfo
+	friendID, _ := utils.StringToUint(c.Query("friend_id"))
+	note := c.Query("note")
+	user.Id, _ = utils.StringToUint(c.GetHeader("id"))
+	if user.ChangeFriendNote(friendID, note) {
+		utils.Success(c, SUCCESS, gin.H{
+			"friend_id": friendID,
+			"note":      note,
+		})
+	} else {
+		utils.Fail(c, ChangeFriendNoteFail, gin.H{
+			"err": "error",
+		})
+	}
+
 }
 
 // DeleteFriend 删除好友

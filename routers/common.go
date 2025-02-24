@@ -2,30 +2,39 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/middlepartedhairstyle/HiWe/middleware"
-	"github.com/middlepartedhairstyle/HiWe/service"
+	"github.com/middlepartedhairstyle/HiWe/utils"
+	"io"
+	"os"
 )
 
-func Routers(router *gin.Engine) {
-	//用户基础功能
-	router.POST("/register", middleware.RateLimiter("register"), service.Register)
-	router.POST("/emailLogin", middleware.RateLimiter("emailLogin"), middleware.LimitLogin("emailLogin"), service.PassWordLogin)
-	router.POST("/codeLogin", middleware.RateLimiter("codeLogin"), middleware.LimitLogin("codeLogin"), service.CodeLogin)
-	router.POST("/sendCode", middleware.RateLimiter("sendCode"), service.SendCode)
-	router.POST("/verifyCode", middleware.RateLimiter("verifyCode"), service.VerifyCode)
-	//用户好友功能
-	router.GET("getFriendList", middleware.RateLimiter("getFriendList"), middleware.CheckToken, service.GetFriendList)
-	router.GET("getRequestAddFriendList", middleware.RateLimiter("getRequestAddFriendList"), middleware.CheckToken, service.GetRequestFriendList)
-	router.POST("requestAddFriend", middleware.RateLimiter("requestAddFriend"), middleware.CheckToken, service.RequestAddFriend)
-	router.POST("disposeAddFriend", middleware.RateLimiter("requestRemoveFriend"), middleware.CheckToken, service.DisposeAddFriend)
-	//用户群功能
-	router.POST("createGroup", middleware.RateLimiter("createGroup"), middleware.CheckToken, service.CreateGroup)
-	router.POST("addGroup", middleware.RateLimiter("addGroup"), middleware.CheckToken, service.AddGroup)
-	router.POST("disposeAddGroup", middleware.RateLimiter("disposeAddGroup"), middleware.CheckToken, service.DisposeAddGroup)
-	router.GET("findAllCreateGroup", middleware.RateLimiter("findAllCreateGroup"), middleware.CheckToken, service.GetCreateGroupList)
-	router.GET("findAllGroup", middleware.RateLimiter("findAllGroup"), middleware.CheckToken, service.GetAllGroupList)
-	router.GET("findGroup", middleware.RateLimiter("findGroup"), middleware.CheckToken, service.FindGroup)
-	//msg
-	router.GET("/ChatWithFriend", middleware.CheckToken, service.Chat)
+type Server struct {
+	Host string
+	Port string
+}
 
+func NewServer(host string, port string) *Server {
+	return &Server{
+		Host: host,
+		Port: port,
+	}
+}
+
+func init() {
+	_, err := utils.CreateFilePath("images/profile_photo")
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (s *Server) Run() {
+	gin.SetMode(gin.DebugMode)
+	logFile, _ := utils.CreateFile("logs", "gin.log")
+	gin.DefaultWriter = io.MultiWriter(logFile, os.Stdout)
+	router := gin.Default()
+	Routers(router)
+
+	err := router.Run(s.Host + ":" + s.Port)
+	if err != nil {
+		return
+	}
 }
